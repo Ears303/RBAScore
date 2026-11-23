@@ -5,6 +5,8 @@ import { loadMatchData, loadMatches } from "@/lib/client";
 import { shortName } from "@/lib/names";
 import { fmt2 } from "@/lib/shots";
 import {
+  cardOf,
+  classTotal,
   emptyMatchData,
   onBoard,
   totalOver,
@@ -15,6 +17,8 @@ import {
 
 type Board = { key: string; title: string; classIds: string[]; isAgg: boolean };
 type Row = { e: Entry; total: number; rank: string };
+/** A column between the name and the score: a card on a class board, a class total on an aggregate. */
+type Col = { label: string; get: (e: Entry) => string };
 
 function rankBoard(entries: Entry[], classIds: string[]): Row[] {
   const list = entries
@@ -32,19 +36,25 @@ function rankBoard(entries: Entry[], classIds: string[]): Row[] {
 function Panel({
   board,
   rows,
+  cols,
   perPage,
   tick,
 }: {
   board: Board;
   rows: Row[];
+  cols: Col[];
   perPage: number;
   tick: number;
 }) {
   const pages = Math.max(1, Math.ceil(rows.length / perPage));
   const page = tick % pages;
   const slice = rows.slice(page * perPage, (page + 1) * perPage);
+  const grid = `1.5em minmax(0, 1fr) repeat(${cols.length}, 2.8em) ${board.isAgg ? "4.9em" : "4.4em"}`;
   return (
-    <section className={`tvpanel${board.isAgg ? " tvagg" : ""}`}>
+    <section
+      className={`tvpanel${board.isAgg ? " tvagg" : ""}`}
+      style={{ flexGrow: 1, flexBasis: `calc(${cols.length} * 3.25em + 15em)` }}
+    >
       <header>
         <h2>{board.title}</h2>
         {pages > 1 && (
@@ -53,11 +63,26 @@ function Panel({
           </span>
         )}
       </header>
+      <div className="tvhdr" style={{ gridTemplateColumns: grid }}>
+        <span />
+        <span />
+        {cols.map((c) => (
+          <span key={c.label} className="cd">{c.label}</span>
+        ))}
+        <span className="tt">Score</span>
+      </div>
       <ol style={{ gridTemplateRows: `repeat(${perPage}, 1fr)` }}>
         {slice.map((r) => (
-          <li key={r.e.id} className={r.rank === "1" || r.rank === "1=" ? "first" : ""}>
+          <li
+            key={r.e.id}
+            className={r.rank === "1" || r.rank === "1=" ? "first" : ""}
+            style={{ gridTemplateColumns: grid }}
+          >
             <span className="rk">{r.rank}</span>
             <span className="nm">{shortName(r.e.name)}</span>
+            {cols.map((c) => (
+              <span key={c.label} className="cd">{c.get(r.e)}</span>
+            ))}
             <span className="tt">{fmt2(r.total)}</span>
           </li>
         ))}
@@ -133,6 +158,23 @@ export default function TvPage() {
     () => boards.map((b) => ({ board: b, rows: rankBoard(data.entries, b.classIds) })),
     [boards, data.entries]
   );
+  const colsFor = (b: Board): Col[] => {
+    if (b.isAgg) {
+      return b.classIds.map((id) => ({
+        label: data.classes.find((c) => c.id === id)?.name ?? "",
+        get: (e: Entry) => fmt2(classTotal(e, id)),
+      }));
+    }
+    const id = b.classIds[0];
+    const n = data.classes.find((c) => c.id === id)?.num_cards ?? 0;
+    return Array.from({ length: n }, (_, i) => ({
+      label: `Card ${i + 1}`,
+      get: (e: Entry) => {
+        const c = cardOf(e, id, i + 1);
+        return c ? fmt2(Number(c.score)) : "–";
+      },
+    }));
+  };
   const classBoards = ranked.filter((r) => !r.board.isAgg);
   const aggBoards = ranked.filter((r) => r.board.isAgg);
 
@@ -156,14 +198,14 @@ export default function TvPage() {
       {classBoards.length > 0 && (
         <div className="tvrow">
           {classBoards.map(({ board, rows }) => (
-            <Panel key={board.key} board={board} rows={rows} perPage={perPage} tick={tick} />
+            <Panel key={board.key} board={board} rows={rows} cols={colsFor(board)} perPage={perPage} tick={tick} />
           ))}
         </div>
       )}
       {aggBoards.length > 0 && (
         <div className="tvrow">
           {aggBoards.map(({ board, rows }) => (
-            <Panel key={board.key} board={board} rows={rows} perPage={perPage} tick={tick} />
+            <Panel key={board.key} board={board} rows={rows} cols={colsFor(board)} perPage={perPage} tick={tick} />
           ))}
         </div>
       )}

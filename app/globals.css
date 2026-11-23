@@ -230,15 +230,20 @@ input[type="checkbox"] { width: auto; }
   list-style: none;
   display: grid;
 }
-.tvpanel li {
+.tvpanel { font-size: min(2.8vh, 1.5vw); }
+.tvpanel header { font-size: initial; }
+.tvhdr, .tvpanel li {
   display: grid;
-  grid-template-columns: 2.4em 1fr auto;
   align-items: center;
-  gap: 0.6em;
-  font-size: min(3vh, 1.9vw);
-  border-bottom: 1px solid #1f2923;
+  column-gap: 0.25em;
   font-variant-numeric: tabular-nums;
 }
+.tvpanel li { border-bottom: 1px solid #1f2923; }
+.tvhdr { color: #93a098; border-bottom: 1px solid #2b352f; padding-bottom: 0.2vh; }
+.tvhdr span { font-size: 0.55em; text-align: right; white-space: nowrap; }
+.tvpanel .cd { font-size: 0.72em; text-align: right; color: #c9d4cc; }
+.tvhdr .cd { color: #93a098; }
+.tvpanel .tt { text-align: right; }
 .tvpanel li:last-child { border-bottom: 0; }
 .tvpanel .rk { color: #93a098; text-align: right; }
 .tvpanel .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }

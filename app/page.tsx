@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { loadMatchData, loadMatches } from "@/lib/client";
+import { shortName } from "@/lib/names";
 import { fmt2, shotLabel } from "@/lib/shots";
 import {
   cardOf,
@@ -177,9 +178,9 @@ export default function Scoreboard() {
                     <th key={c.id} className="num">{c.name}</th>
                   ))
                 : Array.from({ length: numCards }, (_, i) => (
-                    <th key={i} className="num">C{i + 1}</th>
+                    <th key={i} className="num">Card {i + 1}</th>
                   ))}
-              <th className="num">Total</th>
+              <th className="num">Score</th>
             </tr>
           </thead>
           <tbody>
@@ -189,7 +190,7 @@ export default function Scoreboard() {
                   <tr onClick={() => toggle(e.id)} style={{ cursor: "pointer" }}>
                     <td className="num">{rank}</td>
                     <td className="num">{e.entry_number}</td>
-                    <td>{e.name}</td>
+                    <td>{shortName(e.name)}</td>
                     {view.isAgg
                       ? viewClasses.map((c) => (
                           <td key={c.id} className="num">{fmt2(classTotal(e, c.id))}</td>
