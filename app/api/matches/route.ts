@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { admin, authorised } from "@/lib/server";
+import { admin, guard } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
 type ClassIn = string | { name?: unknown; num_cards?: unknown };
 
 export async function POST(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const name = String(body.name ?? "").trim();
   const defaultCards = Number(body.default_cards ?? 2);
@@ -70,9 +69,8 @@ export async function POST(req: Request) {
 
 /** Set or clear a match's logo (an image data URL, or null to remove it). */
 export async function PATCH(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const id = body.id as string | undefined;
   const logo = body.logo as string | null | undefined;
@@ -99,9 +97,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const { error } = await admin().from("matches").delete().eq("id", id);

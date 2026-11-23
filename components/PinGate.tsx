@@ -23,14 +23,19 @@ export default function PinGate({
       const res = await fetch(`/api/verify?role=${role}`, {
         headers: { "x-pin": p },
       });
-      if (!res.ok) throw new Error("Wrong PIN");
-      localStorage.setItem(key, p);
-      setPin(p);
-      setOk(true);
-      setErr("");
+      if (res.ok) {
+        localStorage.setItem(key, p);
+        setPin(p);
+        setOk(true);
+        setErr("");
+        return;
+      }
+      const j = await res.json().catch(() => ({}));
+      // forget a saved PIN only when it is wrong, not when we are merely locked out
+      if (res.status === 401) localStorage.removeItem(key);
+      if (!silent) setErr(j.error || "Wrong PIN");
     } catch {
-      localStorage.removeItem(key);
-      if (!silent) setErr("Wrong PIN");
+      if (!silent) setErr("Could not reach the server");
     } finally {
       setChecking(false);
     }

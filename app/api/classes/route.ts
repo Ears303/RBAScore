@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { admin, authorised } from "@/lib/server";
+import { admin, guard } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
 const validCards = (n: number) => Number.isInteger(n) && n >= 1 && n <= 30;
 
 export async function POST(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const matchId = body.match_id as string | undefined;
   const name = String(body.name ?? "").trim();
@@ -39,9 +38,8 @@ export async function POST(req: Request) {
 
 /** Change how many cards a class has. Refuses to drop below a card that already has scores. */
 export async function PATCH(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const id = body.id as string | undefined;
   const numCards = Number(body.num_cards);

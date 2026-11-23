@@ -53,6 +53,15 @@ create table if not exists rba.entry_members (
 );
 alter table rba.entry_members enable row level security;
 
+-- Wrong-PIN attempts, used to lock out guessing. Server only.
+create table if not exists rba.pin_attempts (
+  id uuid primary key default gen_random_uuid(),
+  ip text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists pin_attempts_ip_idx on rba.pin_attempts (ip, created_at);
+alter table rba.pin_attempts enable row level security;
+
 create table if not exists rba.card_scores (
   id uuid primary key default gen_random_uuid(),
   entry_id uuid not null references rba.entries(id) on delete cascade,
@@ -104,6 +113,8 @@ alter default privileges in schema rba grant all on tables to service_role;
 -- Keep membership numbers private (must stay after the grants above).
 revoke all on rba.entry_members from anon, authenticated;
 grant all on rba.entry_members to service_role;
+revoke all on rba.pin_attempts from anon, authenticated;
+grant all on rba.pin_attempts to service_role;
 
 -- AFTER running this: Supabase dashboard -> Project Settings -> API (Data API settings)
 -- -> add "rba" to "Exposed schemas" and save. Without that the API returns "schema must be one of ...".

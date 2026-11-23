@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { admin, authorised } from "@/lib/server";
+import { admin, guard } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +21,8 @@ const friendly = (msg: string) =>
 
 /** Admin only: entries including the private membership numbers. */
 export async function GET(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const matchId = new URL(req.url).searchParams.get("match_id");
   if (!matchId) return NextResponse.json({ error: "match_id required" }, { status: 400 });
 
@@ -58,9 +57,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const matchId = body.match_id as string | undefined;
   const rows = body.rows as RowIn[] | undefined;
@@ -132,9 +130,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const { error } = await admin().from("entries").delete().eq("id", id);

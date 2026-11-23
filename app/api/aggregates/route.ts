@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { admin, authorised } from "@/lib/server";
+import { admin, guard } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const matchId = body.match_id as string | undefined;
   const name = String(body.name ?? "").trim();
@@ -37,9 +36,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!authorised(req, "admin")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "admin");
+  if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const { error } = await admin().from("aggregates").delete().eq("id", id);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { admin, authorised } from "@/lib/server";
+import { admin, guard } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +19,8 @@ const validShot = (v: unknown): v is number =>
   ((Number.isInteger(v) && v >= 0 && v <= 10) || Math.round(v * 100) === 1001);
 
 export async function POST(req: Request) {
-  if (!authorised(req, "scorer")) {
-    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
-  }
+  const denied = await guard(req, "scorer");
+  if (denied) return denied;
 
   let body: { entry_id?: string; class_id?: string; cards?: CardIn[] };
   try {
