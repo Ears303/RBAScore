@@ -8,8 +8,12 @@ create table if not exists rba.matches (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   match_date date,
+  logo text, -- event logo as a small image data URL, set from the admin page
   created_at timestamptz not null default now()
 );
+
+-- for projects that already ran an older version of this file
+alter table rba.matches add column if not exists logo text;
 
 -- The classes shot at a match (Sporter, Light, Heavy). Each class has its own number of cards.
 create table if not exists rba.classes (

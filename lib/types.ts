@@ -2,6 +2,8 @@ export type Match = {
   id: string;
   name: string;
   match_date: string | null;
+  /** event logo as an image data URL */
+  logo: string | null;
 };
 
 export type RbaClass = {

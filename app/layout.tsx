@@ -19,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav>
           <span className="brand">RBA Scoring</span>
           <Link href="/">Scoreboard</Link>
+          <Link href="/tv">TV display</Link>
           <Link href="/score">Score entry</Link>
           <Link href="/admin">Admin</Link>
         </nav>

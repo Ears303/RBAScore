@@ -187,3 +187,68 @@ input[type="checkbox"] { width: auto; }
 @media (max-width: 560px) {
   .card-grid { grid-template-columns: 44px 70px 70px 1fr; }
 }
+
+/* ---- TV display (/tv): fixed dark theme, sized in vh/vw so it scales to any screen ---- */
+.tv {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vh;
+  padding: 1.4vh 1.2vw;
+  background: #0b110d;
+  color: #f2f7f3;
+  cursor: none;
+  overflow: hidden;
+}
+.tvhead { display: flex; justify-content: space-between; align-items: baseline; }
+.tvtitle { font-size: 4vh; font-weight: 800; letter-spacing: 0.01em; }
+.tvmeta { font-size: 2vh; color: #93a098; }
+.tverr { color: #f2877f; }
+.tvmsg { font-size: 4vh; color: #93a098; margin: auto; }
+.tvrow { flex: 1; display: flex; gap: 1.2vw; min-height: 0; }
+.tvpanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #141c17;
+  border: 1px solid #2b352f;
+  border-radius: 1.2vh;
+  padding: 1vh 1vw 0.6vh;
+}
+.tvagg { border-color: #3d6b52; }
+.tvpanel header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.6vh; }
+.tvpanel h2 { margin: 0; font-size: 3.6vh; color: #4fb07f; }
+.tvpage { font-size: 2vh; color: #93a098; }
+.tvpanel ol {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.tvpanel li {
+  display: grid;
+  grid-template-columns: 2.4em 1fr auto;
+  align-items: center;
+  gap: 0.6em;
+  font-size: min(3vh, 1.9vw);
+  border-bottom: 1px solid #1f2923;
+  font-variant-numeric: tabular-nums;
+}
+.tvpanel li:last-child { border-bottom: 0; }
+.tvpanel .rk { color: #93a098; text-align: right; }
+.tvpanel .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tvpanel .tt { font-weight: 800; }
+.tvpanel li.first .rk, .tvpanel li.first .tt { color: #e8c15a; }
+.tvpanel li.empty { display: block; color: #93a098; align-self: center; }
+
+.titlerow { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
+.titlerow h1 { margin: 0; }
+/* a light backing keeps logos with white or transparent backgrounds readable in dark mode */
+.logo { height: 64px; width: auto; background: #fff; border-radius: 8px; padding: 3px; }
+.tvbrand { display: flex; align-items: center; gap: 1vw; }
+.tvlogo { height: 10vh; width: auto; background: #fff; border-radius: 1vh; padding: 0.4vh 0.5vh; }

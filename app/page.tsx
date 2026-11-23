@@ -70,6 +70,7 @@ export default function Scoreboard() {
     ],
     [data]
   );
+  const match = matches.find((m) => m.id === matchId);
   const view = views.find((v) => v.key === viewKey) ?? views[0];
   // Card columns only apply to a single class board; each class has its own number of cards.
   const numCards =
@@ -110,7 +111,13 @@ export default function Scoreboard() {
 
   return (
     <>
-      <h1>Scoreboard</h1>
+      <div className="titlerow">
+        {match?.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="logo" src={match.logo} alt="" />
+        )}
+        <h1>{match ? match.name : "Scoreboard"}</h1>
+      </div>
 
       <div className="panel">
         <div className="row">

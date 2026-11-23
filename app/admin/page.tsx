@@ -19,6 +19,31 @@ function parseClasses(text: string, defaultCards: number) {
     });
 }
 
+/** Shrinks an image file to a small PNG data URL (keeps transparency) so it can be stored with the match. */
+async function logoDataUrl(file: File): Promise<string> {
+  const src = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("That file is not an image I can read"));
+      i.src = src;
+    });
+    for (const max of [400, 300, 200]) {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL("image/png");
+      if (url.length <= 380_000) return url;
+    }
+    throw new Error("That logo is too detailed to store. Try a simpler or smaller image.");
+  } finally {
+    URL.revokeObjectURL(src);
+  }
+}
+
 export default function AdminPage() {
   return (
     <>
@@ -114,6 +139,17 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       await api(`/api/matches?id=${m.id}`, pin, undefined, "DELETE");
       await reloadMatches("");
       setMsg({ kind: "ok", text: "Match deleted" });
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function setLogo(file: File | null) {
+    try {
+      const logo = file ? await logoDataUrl(file) : null;
+      await api("/api/matches", pin, { id: matchId, logo }, "PATCH");
+      await reloadMatches(matchId);
+      setMsg({ kind: "ok", text: logo ? "Logo saved" : "Logo removed" });
     } catch (err) {
       fail(err);
     }
@@ -306,6 +342,39 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
       {matchId && (
         <>
+          <div className="panel">
+            <h2>Event logo</h2>
+            <div className="row" style={{ alignItems: "center" }}>
+              {matches.find((m) => m.id === matchId)?.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="logo" src={matches.find((m) => m.id === matchId)!.logo!} alt="Current logo" style={{ flex: "0 0 auto" }} />
+              ) : (
+                <span className="muted small shrink">No logo yet</span>
+              )}
+              <div>
+                <label htmlFor="logofile">Upload a logo for this match (PNG or JPG)</label>
+                <input
+                  id="logofile"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) setLogo(f);
+                  }}
+                />
+              </div>
+              {matches.find((m) => m.id === matchId)?.logo && (
+                <div className="shrink">
+                  <button className="secondary" onClick={() => setLogo(null)}>Remove logo</button>
+                </div>
+              )}
+            </div>
+            <p className="muted small" style={{ marginBottom: 0 }}>
+              Each match has its own logo. It shows on the TV display and at the top of the scoreboard.
+            </p>
+          </div>
+
           <div className="panel">
             <h2>Classes and aggregates</h2>
             {data.classes.map((c) => {

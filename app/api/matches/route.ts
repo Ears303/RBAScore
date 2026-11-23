@@ -68,6 +68,36 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, match });
 }
 
+/** Set or clear a match's logo (an image data URL, or null to remove it). */
+export async function PATCH(req: Request) {
+  if (!authorised(req, "admin")) {
+    return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const id = body.id as string | undefined;
+  const logo = body.logo as string | null | undefined;
+  if (!id || logo === undefined) {
+    return NextResponse.json({ error: "id and logo required" }, { status: 400 });
+  }
+  if (logo !== null) {
+    const ok =
+      typeof logo === "string" &&
+      logo.length <= 400_000 &&
+      /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(logo);
+    if (!ok) {
+      return NextResponse.json({ error: "Logo must be a PNG, JPG or WebP image under 400 KB" }, { status: 400 });
+    }
+  }
+  const { error } = await admin().from("matches").update({ logo }).eq("id", id);
+  if (error) {
+    const msg = error.message.includes("logo")
+      ? "The database is missing the logo column. Run the logo SQL from the chat in the Supabase SQL editor, then try again."
+      : error.message;
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 export async function DELETE(req: Request) {
   if (!authorised(req, "admin")) {
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
