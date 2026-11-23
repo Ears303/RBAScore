@@ -43,6 +43,9 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
   const [eNum, setENum] = useState("");
   const [eName, setEName] = useState("");
+  const [eMember, setEMember] = useState("");
+  // WASRA membership numbers by entry id (admin only, loaded through the server)
+  const [members, setMembers] = useState<Record<string, string>>({});
   const [bulk, setBulk] = useState("");
 
   const [newClass, setNewClass] = useState("");
@@ -61,7 +64,18 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   }
 
   async function reloadData() {
-    setData(matchId ? await loadMatchData(matchId) : emptyMatchData());
+    if (!matchId) {
+      setData(emptyMatchData());
+      setMembers({});
+      return;
+    }
+    setData(await loadMatchData(matchId));
+    const res = await api(`/api/entries?match_id=${matchId}`, pin, undefined, "GET");
+    const map: Record<string, string> = {};
+    for (const en of res.entries as { id: string; membership_number: string | null }[]) {
+      if (en.membership_number) map[en.id] = en.membership_number;
+    }
+    setMembers(map);
   }
 
   useEffect(() => {
@@ -168,10 +182,17 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
     try {
       const res = await api("/api/entries", pin, {
         match_id: matchId,
-        rows: [{ entry_number: eNum.trim() === "" ? null : Number(eNum), name: eName }],
+        rows: [
+          {
+            entry_number: eNum.trim() === "" ? null : Number(eNum),
+            name: eName,
+            membership_number: eMember,
+          },
+        ],
       });
       setENum("");
       setEName("");
+      setEMember("");
       await reloadData();
       const saved = res.entries?.[0];
       setMsg({ kind: "ok", text: `Saved #${saved?.entry_number ?? ""} ${saved?.name ?? eName}` });
@@ -186,12 +207,15 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       .map((l) => l.trim())
       .filter(Boolean)
       .map((l) => {
-        // "12, Name" uses that number; a plain "Name" line gets the next free number.
+        // [entry number,] name [, WASRA membership number]. No entry number = next free number.
         const parts = l.split(/[,\t]/).map((s) => s.trim());
-        if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
-          return { entry_number: Number(parts[0]), name: parts.slice(1).join(", ") };
-        }
-        return { entry_number: null, name: l };
+        const hasNum = parts.length >= 2 && /^\d+$/.test(parts[0]);
+        const [name, member] = hasNum ? parts.slice(1) : parts;
+        return {
+          entry_number: hasNum ? Number(parts[0]) : null,
+          name,
+          membership_number: member || null,
+        };
       });
     try {
       const res = await api("/api/entries", pin, { match_id: matchId, rows });
@@ -393,6 +417,10 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                   <label htmlFor="ename">Name</label>
                   <input id="ename" value={eName} onChange={(e) => setEName(e.target.value)} required />
                 </div>
+                <div>
+                  <label htmlFor="emember">WASRA membership number</label>
+                  <input id="emember" value={eMember} onChange={(e) => setEMember(e.target.value)} />
+                </div>
                 <div className="shrink">
                   <button type="submit">Save entry</button>
                 </div>
@@ -401,14 +429,15 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
             <h2 style={{ marginTop: 24 }}>Bulk import</h2>
             <p className="muted small" style={{ marginTop: 0 }}>
-              One competitor per line. Just a name gets the next free entry number automatically, or write{" "}
-              <code>number, name</code> to choose the number (an existing number is updated). A competitor has one
-              entry number for all the classes they shoot.
+              One competitor per line: <code>name, WASRA membership number</code> (the membership number is
+              optional). The next free entry number is assigned automatically, or start the line with a number to
+              choose it, e.g. <code>20, name, membership number</code> (an existing entry number is updated). A
+              competitor has one entry number for all the classes they shoot.
             </p>
             <textarea
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
-              placeholder={"Paul Donohoe\nJane Smith\n20, Number chosen by you"}
+              placeholder={"Paul Donohoe, 1234\nJane Smith, 5678\n20, Entry number chosen by you, 9012"}
             />
             <div style={{ marginTop: 8 }}>
               <button onClick={importBulk} disabled={!bulk.trim()}>Import</button>
@@ -422,6 +451,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                 <tr>
                   <th className="num">#</th>
                   <th>Name</th>
+                  <th>WASRA #</th>
                   <th>Classes scored</th>
                   <th />
                 </tr>
@@ -431,6 +461,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                   <tr key={en.id}>
                     <td className="num">{en.entry_number}</td>
                     <td>{en.name}</td>
+                    <td className="muted">{members[en.id] ?? ""}</td>
                     <td className="muted">
                       {data.classes.filter((c) => hasClass(en, c.id)).map((c) => c.name).join(", ")}
                     </td>
@@ -440,7 +471,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                   </tr>
                 ))}
                 {data.entries.length === 0 && (
-                  <tr><td colSpan={4} className="muted">No entries yet.</td></tr>
+                  <tr><td colSpan={5} className="muted">No entries yet.</td></tr>
                 )}
               </tbody>
             </table>

@@ -30,7 +30,7 @@ All tables are in the `rba` schema:
 - `matches`: name, date
 - `classes`: the classes shot at a match, each with its number of cards
 - `aggregates`: named sums of classes (2 Gun Agg, 3 Gun Agg)
-- `entries`: entry number (unique per match), name
+- `entries`: entry number (unique per match), name, WASRA membership number. The membership number is private: the public key cannot read it, and only the admin page (via a server route) shows it.
 - `card_scores`: one row per entry per class per card with the shots (array of up to 25 values, 10.01 = X), card score (max 250.25, calculated by the API), first miss (1 to 25 or blank), notes
 
 If you already ran an earlier version of `schema.sql` (before shot-by-shot entry), run `drop schema rba cascade;` first, then run the current file. Nothing is lost if no scores were entered yet.
