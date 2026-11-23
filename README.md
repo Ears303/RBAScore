@@ -8,7 +8,7 @@ Next.js app for Vercel with a Supabase back end.
 
 ## Classes and aggregates
 
-A competitor has one entry number per match and can shoot up to three classes (or more if the match has more). Scores are entered per class on the score entry page. Each class has its own board. An aggregate is the sum of the classes it lists, and a competitor shows on it once they have scores in every one of those classes. A 3-class match gets "3 Gun Agg" (all three) and "2 Gun Agg" (the first two) by default; change them on the admin page.
+A competitor has one entry number per match and can shoot up to three classes (or more if the match has more). Scores are entered per class on the score entry page. Each class has its own board. An aggregate is the sum of the classes it lists, and a competitor shows on it once they have scores in every one of those classes. A match with the classes Sporter, Light and Heavy gets "3 Gun Agg" (all three) and "2 Gun Agg" (Light + Heavy) automatically; change them on the admin page.
 
 ## Setup
 

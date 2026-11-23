@@ -43,13 +43,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: cErr?.message ?? "Could not add classes" }, { status: 500 });
   }
 
-  // Default aggregates: 2 classes -> "2 Gun Agg"; 3 classes -> "3 Gun Agg" and a "2 Gun Agg" of the first two.
-  // These can be changed on the admin page.
-  const ids = classes.map((c: { id: string }) => c.id);
+  // Default aggregates (changeable on the admin page):
+  //  - 3 classes -> "3 Gun Agg" of all three
+  //  - "2 Gun Agg" is the Light + Heavy classes (found by name); with other names it is the first two classes
+  const list = classes as { id: string; name: string }[];
+  const ids = list.map((c) => c.id);
+  const light = list.find((c) => /light/i.test(c.name));
+  const heavy = list.find((c) => /heavy/i.test(c.name));
+  const twoGun = light && heavy ? [light.id, heavy.id] : ids.slice(0, 2);
   const aggs: { match_id: string; name: string; class_ids: string[] }[] = [];
   if (ids.length === 3) aggs.push({ match_id: match.id, name: "3 Gun Agg", class_ids: ids });
   if (ids.length === 2 || ids.length === 3) {
-    aggs.push({ match_id: match.id, name: "2 Gun Agg", class_ids: ids.slice(0, 2) });
+    aggs.push({ match_id: match.id, name: "2 Gun Agg", class_ids: twoGun });
   }
   if (aggs.length) await db.from("aggregates").insert(aggs);
 

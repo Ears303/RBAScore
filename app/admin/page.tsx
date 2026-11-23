@@ -203,7 +203,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                 id="mclasses"
                 value={mClasses}
                 onChange={(e) => setMClasses(e.target.value)}
-                placeholder="Light Varmint, Heavy Varmint, Sporter"
+                placeholder="Sporter, Light, Heavy"
                 required
               />
             </div>
@@ -212,8 +212,8 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
             </div>
           </div>
           <p className="muted small" style={{ marginBottom: 0 }}>
-            With 3 classes the match gets a "3 Gun Agg" (all three) and a "2 Gun Agg" (the first two) automatically.
-            With 2 classes it gets a "2 Gun Agg". You can change aggregates after creating the match.
+            With 3 classes the match gets a "3 Gun Agg" (all three) and a "2 Gun Agg" (the Light and Heavy classes)
+            automatically. You can change aggregates after creating the match.
           </p>
         </form>
       </div>
