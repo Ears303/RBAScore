@@ -1,0 +1,152 @@
+:root {
+  --bg: #f6f7f5;
+  --card: #ffffff;
+  --text: #1c2420;
+  --muted: #66716b;
+  --line: #dfe4e0;
+  --accent: #1f5f3f;
+  --accent-text: #ffffff;
+  --danger: #b3261e;
+  --ok: #1f7a46;
+  --row-alt: #f1f4f1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121714;
+    --card: #1a211d;
+    --text: #e8eee9;
+    --muted: #93a098;
+    --line: #2b352f;
+    --accent: #4fb07f;
+    --accent-text: #0b130e;
+    --danger: #f2877f;
+    --ok: #6fd39b;
+    --row-alt: #1e2621;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+nav .brand { font-weight: 700; margin-right: 12px; }
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+nav a:hover { color: var(--text); background: var(--row-alt); }
+
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+h1 { font-size: 1.5rem; margin: 8px 0 16px; }
+h2 { font-size: 1.15rem; margin: 0 0 12px; }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.row > * { flex: 1 1 160px; }
+.row > .shrink { flex: 0 0 auto; }
+
+label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+textarea { min-height: 90px; resize: vertical; }
+
+button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button.secondary { background: transparent; color: var(--text); border-color: var(--line); }
+button.danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+.msg { padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 0.95rem; }
+.msg.err { color: var(--danger); border: 1px solid var(--danger); }
+.msg.ok { color: var(--ok); border: 1px solid var(--ok); }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
+th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+tbody tr:nth-child(even) { background: var(--row-alt); }
+td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
+td.total { font-weight: 700; font-size: 1.1rem; text-align: center; }
+.fm { display: block; font-size: 0.7rem; color: var(--muted); }
+.note-dot { color: var(--accent); cursor: help; }
+
+.results { display: grid; gap: 8px; margin-top: 12px; }
+.result {
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+.result:hover { border-color: var(--accent); }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 56px 90px 90px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.card-grid .head { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; }
+.card-grid .cardno { font-weight: 700; }
+
+.bigtotal { font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 560px) {
+  .card-grid { grid-template-columns: 44px 70px 70px 1fr; }
+}
