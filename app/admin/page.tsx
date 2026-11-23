@@ -166,14 +166,15 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await api("/api/entries", pin, {
+      const res = await api("/api/entries", pin, {
         match_id: matchId,
-        rows: [{ entry_number: Number(eNum), name: eName }],
+        rows: [{ entry_number: eNum.trim() === "" ? null : Number(eNum), name: eName }],
       });
       setENum("");
       setEName("");
       await reloadData();
-      setMsg({ kind: "ok", text: "Entry saved" });
+      const saved = res.entries?.[0];
+      setMsg({ kind: "ok", text: `Saved #${saved?.entry_number ?? ""} ${saved?.name ?? eName}` });
     } catch (err) {
       fail(err);
     }
@@ -185,8 +186,12 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       .map((l) => l.trim())
       .filter(Boolean)
       .map((l) => {
-        const [num, name] = l.split(/[,\t]/).map((s) => s.trim());
-        return { entry_number: Number(num), name };
+        // "12, Name" uses that number; a plain "Name" line gets the next free number.
+        const parts = l.split(/[,\t]/).map((s) => s.trim());
+        if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+          return { entry_number: Number(parts[0]), name: parts.slice(1).join(", ") };
+        }
+        return { entry_number: null, name: l };
       });
     try {
       const res = await api("/api/entries", pin, { match_id: matchId, rows });
@@ -375,8 +380,14 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
             <form onSubmit={addEntry}>
               <div className="row">
                 <div>
-                  <label htmlFor="enum">Entry number</label>
-                  <input id="enum" inputMode="numeric" value={eNum} onChange={(e) => setENum(e.target.value)} required />
+                  <label htmlFor="enum">Entry number (blank = automatic)</label>
+                  <input
+                    id="enum"
+                    inputMode="numeric"
+                    value={eNum}
+                    onChange={(e) => setENum(e.target.value.replace(/\D/g, ""))}
+                    placeholder="auto"
+                  />
                 </div>
                 <div style={{ flex: "2 1 220px" }}>
                   <label htmlFor="ename">Name</label>
@@ -390,13 +401,14 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
             <h2 style={{ marginTop: 24 }}>Bulk import</h2>
             <p className="muted small" style={{ marginTop: 0 }}>
-              One competitor per line: <code>number, name</code>. Existing numbers are updated. A competitor has one
+              One competitor per line. Just a name gets the next free entry number automatically, or write{" "}
+              <code>number, name</code> to choose the number (an existing number is updated). A competitor has one
               entry number for all the classes they shoot.
             </p>
             <textarea
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
-              placeholder={"1, Paul Donohoe\n2, Jane Smith"}
+              placeholder={"Paul Donohoe\nJane Smith\n20, Number chosen by you"}
             />
             <div style={{ marginTop: 8 }}>
               <button onClick={importBulk} disabled={!bulk.trim()}>Import</button>

@@ -4,7 +4,7 @@ Next.js app for Vercel with a Supabase back end.
 
 - `/` public scoreboard. One tab per class plus a tab per aggregate (e.g. 2 Gun Agg, 3 Gun Agg). Ranked, per-card scores, first miss, notes marker, total, and tap a row to see every shot. The decimals of a score are the X count. Auto-refreshes every 15 seconds.
 - `/score` score entry (PIN). Find a shooter by name or entry number, then enter each card's 25 shots one at a time (0 to 10, or `X` which counts 10.01), plus first miss shot number and notes. A card maxes at 250.25. Card and match totals update as you type. Typing moves to the next shot automatically (type `1` then `0` for a 10), and you can paste a whole card like `10 X X 9 8 ...`.
-- `/admin` (PIN) create matches (the classes shot and cards in each), manage aggregates, add entries one at a time or paste a list.
+- `/admin` (PIN) create matches (the classes shot and cards in each), manage aggregates, add entries one at a time or paste a list. Entry numbers are assigned automatically (next free number in the match) unless you type one.
 
 ## Classes and aggregates
 
