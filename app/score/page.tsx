@@ -151,8 +151,6 @@ function Scorer({ pin, lock }: { pin: string; lock: () => void }) {
       .catch((e) => setMsg({ kind: "err", text: e.message }));
   }, [matchId]);
 
-  const match = matches.find((m) => m.id === matchId);
-  const numCards = match?.num_cards ?? 5;
   const selected = data.entries.find((e) => e.id === selectedId) ?? null;
   const rows = rowsByClass[classId] ?? [];
   const currentClass = data.classes.find((c) => c.id === classId);
@@ -173,7 +171,7 @@ function Scorer({ pin, lock }: { pin: string; lock: () => void }) {
     setMsg(null);
     const map: Record<string, CardRow[]> = {};
     for (const cl of data.classes) {
-      map[cl.id] = Array.from({ length: numCards }, (_, i) => {
+      map[cl.id] = Array.from({ length: cl.num_cards }, (_, i) => {
         const c = cardOf(e, cl.id, i + 1);
         if (!c) return emptyCard();
         const shots = Array(SHOTS).fill("") as string[];

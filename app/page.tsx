@@ -58,9 +58,6 @@ export default function Scoreboard() {
     return () => clearInterval(t);
   }, [refresh]);
 
-  const match = matches.find((m) => m.id === matchId);
-  const numCards = match?.num_cards ?? 5;
-
   const views = useMemo<View[]>(
     () => [
       ...data.classes.map((c) => ({ key: c.id, label: c.name, classIds: [c.id], isAgg: false })),
@@ -74,6 +71,9 @@ export default function Scoreboard() {
     [data]
   );
   const view = views.find((v) => v.key === viewKey) ?? views[0];
+  // Card columns only apply to a single class board; each class has its own number of cards.
+  const numCards =
+    view && !view.isAgg ? data.classes.find((c) => c.id === view.classIds[0])?.num_cards ?? 0 : 0;
 
   const ranked = useMemo<Ranked[]>(() => {
     if (!view) return [];

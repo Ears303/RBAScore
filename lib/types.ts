@@ -2,14 +2,14 @@ export type Match = {
   id: string;
   name: string;
   match_date: string | null;
-  /** cards per class */
-  num_cards: number;
 };
 
 export type RbaClass = {
   id: string;
   match_id: string;
   name: string;
+  /** how many cards are shot in this class */
+  num_cards: number;
   sort_order: number;
 };
 

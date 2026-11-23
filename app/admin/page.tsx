@@ -5,6 +5,20 @@ import PinGate from "@/components/PinGate";
 import { api, loadMatchData, loadMatches } from "@/lib/client";
 import { emptyMatchData, hasClass, type Entry, type Match, type MatchData } from "@/lib/types";
 
+/** "Sporter:3, Light:2, Heavy:2" -> classes with their card counts (default used when no count is given). */
+function parseClasses(text: string, defaultCards: number) {
+  return text
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const m = s.match(/^(.+?)\s*[:=]\s*(\d+)$/);
+      return m
+        ? { name: m[1].trim(), num_cards: Number(m[2]) }
+        : { name: s, num_cards: defaultCards };
+    });
+}
+
 export default function AdminPage() {
   return (
     <>
@@ -24,7 +38,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
   const [mName, setMName] = useState("");
   const [mDate, setMDate] = useState("");
-  const [mCards, setMCards] = useState("5");
+  const [mCards, setMCards] = useState("2");
   const [mClasses, setMClasses] = useState("");
 
   const [eNum, setENum] = useState("");
@@ -32,6 +46,8 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   const [bulk, setBulk] = useState("");
 
   const [newClass, setNewClass] = useState("");
+  const [newClassCards, setNewClassCards] = useState("2");
+  const [cardEdits, setCardEdits] = useState<Record<string, string>>({});
   const [aName, setAName] = useState("");
   const [aSel, setASel] = useState<Set<string>>(new Set());
 
@@ -65,8 +81,8 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       const res = await api("/api/matches", pin, {
         name: mName,
         match_date: mDate || null,
-        num_cards: Number(mCards),
-        classes: mClasses.split(",").map((s) => s.trim()).filter(Boolean),
+        default_cards: Number(mCards),
+        classes: parseClasses(mClasses, Number(mCards)),
       });
       setMName("");
       setMDate("");
@@ -92,10 +108,29 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   async function addClass(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await api("/api/classes", pin, { match_id: matchId, name: newClass });
+      await api("/api/classes", pin, {
+        match_id: matchId,
+        name: newClass,
+        num_cards: Number(newClassCards),
+      });
       setNewClass("");
       await reloadData();
       setMsg({ kind: "ok", text: "Class added. Add it to an aggregate below if needed." });
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function saveCards(id: string) {
+    try {
+      await api("/api/classes", pin, { id, num_cards: Number(cardEdits[id]) }, "PATCH");
+      setCardEdits((s) => {
+        const n = { ...s };
+        delete n[id];
+        return n;
+      });
+      await reloadData();
+      setMsg({ kind: "ok", text: "Cards updated" });
     } catch (err) {
       fail(err);
     }
@@ -192,18 +227,18 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
               <input id="mdate" type="date" value={mDate} onChange={(e) => setMDate(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="mcards">Cards per class</label>
+              <label htmlFor="mcards">Default cards per class</label>
               <input id="mcards" inputMode="numeric" value={mCards} onChange={(e) => setMCards(e.target.value)} />
             </div>
           </div>
           <div className="row" style={{ marginTop: 12 }}>
             <div style={{ flex: "3 1 300px" }}>
-              <label htmlFor="mclasses">Classes (comma separated, in order)</label>
+              <label htmlFor="mclasses">Classes, each with its number of cards</label>
               <input
                 id="mclasses"
                 value={mClasses}
                 onChange={(e) => setMClasses(e.target.value)}
-                placeholder="Sporter, Light, Heavy"
+                placeholder="Sporter:3, Light:2, Heavy:2"
                 required
               />
             </div>
@@ -226,7 +261,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
               {matches.length === 0 && <option value="">No matches yet</option>}
               {matches.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name}{m.match_date ? ` (${m.match_date})` : ""} · {m.num_cards} cards per class
+                  {m.name}{m.match_date ? ` (${m.match_date})` : ""}
                 </option>
               ))}
             </select>
@@ -244,16 +279,41 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
         <>
           <div className="panel">
             <h2>Classes and aggregates</h2>
-            <div className="chips" style={{ marginBottom: 12 }}>
-              {data.classes.map((c) => (
-                <span key={c.id} className="muted">{c.name}</span>
-              ))}
-            </div>
-            <form onSubmit={addClass}>
+            {data.classes.map((c) => {
+              const edit = cardEdits[c.id];
+              const changed = edit !== undefined && edit !== String(c.num_cards);
+              return (
+                <div key={c.id} className="row" style={{ alignItems: "center", marginBottom: 8 }}>
+                  <div><strong>{c.name}</strong></div>
+                  <div className="shrink" style={{ width: 90 }}>
+                    <input
+                      aria-label={`${c.name} cards`}
+                      inputMode="numeric"
+                      value={edit ?? String(c.num_cards)}
+                      onChange={(e) => setCardEdits((s) => ({ ...s, [c.id]: e.target.value.replace(/\D/g, "") }))}
+                    />
+                  </div>
+                  <div className="muted small shrink">cards</div>
+                  <div className="shrink">
+                    <button className="secondary" onClick={() => saveCards(c.id)} disabled={!changed}>Save</button>
+                  </div>
+                </div>
+              );
+            })}
+            <form onSubmit={addClass} style={{ marginTop: 12 }}>
               <div className="row">
                 <div>
                   <label htmlFor="newclass">Add a class</label>
                   <input id="newclass" value={newClass} onChange={(e) => setNewClass(e.target.value)} required />
+                </div>
+                <div className="shrink" style={{ width: 90 }}>
+                  <label htmlFor="newclasscards">Cards</label>
+                  <input
+                    id="newclasscards"
+                    inputMode="numeric"
+                    value={newClassCards}
+                    onChange={(e) => setNewClassCards(e.target.value.replace(/\D/g, ""))}
+                  />
                 </div>
                 <div className="shrink">
                   <button type="submit">Add class</button>

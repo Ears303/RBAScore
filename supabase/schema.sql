@@ -8,15 +8,15 @@ create table if not exists rba.matches (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   match_date date,
-  num_cards int not null default 5 check (num_cards between 1 and 30), -- cards per class
   created_at timestamptz not null default now()
 );
 
--- The classes shot at a match (e.g. Light Varmint, Heavy Varmint, Sporter).
+-- The classes shot at a match (Sporter, Light, Heavy). Each class has its own number of cards.
 create table if not exists rba.classes (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references rba.matches(id) on delete cascade,
   name text not null,
+  num_cards int not null default 2 check (num_cards between 1 and 30),
   sort_order int not null default 0,
   unique (match_id, name)
 );
