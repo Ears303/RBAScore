@@ -156,7 +156,16 @@ td.total { font-weight: 700; font-size: 1.1rem; text-align: center; }
 .cardhead { display: flex; gap: 12px; align-items: baseline; margin-bottom: 8px; }
 .cardscore { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.shots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; }
+.shots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px 6px; max-width: 360px; }
+.shotcell { display: flex; flex-direction: column; align-items: stretch; }
+.shotno {
+  font-size: 0.7rem;
+  line-height: 1;
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+}
 .shot {
   text-align: center;
   padding: 10px 0;

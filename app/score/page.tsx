@@ -70,21 +70,23 @@ function ShotGrid({
   return (
     <div className="shots">
       {shots.map((s, i) => (
-        <input
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          className="shot"
-          aria-label={`${label} shot ${i + 1}`}
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="characters"
-          value={s}
-          onFocus={(e) => e.currentTarget.select()}
-          onChange={(e) => handle(i, e.target.value)}
-          onKeyDown={(e) => keyDown(i, e)}
-        />
+        <div key={i} className="shotcell">
+          <span className="shotno" aria-hidden="true">{i + 1}</span>
+          <input
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            className="shot"
+            aria-label={`${label} shot ${i + 1}`}
+            inputMode="text"
+            autoComplete="off"
+            autoCapitalize="characters"
+            value={s}
+            onFocus={(e) => e.currentTarget.select()}
+            onChange={(e) => handle(i, e.target.value)}
+            onKeyDown={(e) => keyDown(i, e)}
+          />
+        </div>
       ))}
     </div>
   );

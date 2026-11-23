@@ -13,6 +13,12 @@ type RowIn = {
 
 const isBlank = (v: unknown) => v === null || v === undefined || String(v).trim() === "";
 
+// The membership column is added by a schema update; say so plainly if it has not been run yet.
+const friendly = (msg: string) =>
+  msg.includes("membership_number")
+    ? "The database is missing the membership_number column. Run the membership SQL from the chat in the Supabase SQL editor, then try again."
+    : msg;
+
 /** Admin only: entries including the private membership numbers. */
 export async function GET(req: Request) {
   if (!authorised(req, "admin")) {
@@ -25,7 +31,7 @@ export async function GET(req: Request) {
     .select("id, entry_number, name, membership_number")
     .eq("match_id", matchId)
     .order("entry_number");
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: friendly(error.message) }, { status: 500 });
   return NextResponse.json({ ok: true, entries: data });
 }
 
@@ -96,7 +102,7 @@ export async function POST(req: Request) {
     .from("entries")
     .upsert(clean, { onConflict: "match_id,entry_number" })
     .select("entry_number,name");
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: friendly(error.message) }, { status: 500 });
   return NextResponse.json({ ok: true, count: clean.length, entries: data });
 }
 
