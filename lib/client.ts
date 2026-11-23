@@ -31,12 +31,7 @@ export async function loadMatchData(matchId: string): Promise<MatchData> {
   const [c, a, e] = await Promise.all([
     sb().from("classes").select("*").eq("match_id", matchId).order("sort_order"),
     sb().from("aggregates").select("*").eq("match_id", matchId).order("created_at"),
-    // Explicit columns: the public key is not allowed to read membership_number.
-    sb()
-      .from("entries")
-      .select("id, match_id, entry_number, name, card_scores(*)")
-      .eq("match_id", matchId)
-      .order("entry_number"),
+    sb().from("entries").select("*, card_scores(*)").eq("match_id", matchId).order("entry_number"),
   ]);
   for (const r of [c, a, e]) if (r.error) throw new Error(r.error.message);
   return {

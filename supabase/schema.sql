@@ -37,12 +37,17 @@ create table if not exists rba.entries (
   match_id uuid not null references rba.matches(id) on delete cascade,
   entry_number int not null,
   name text not null,
-  membership_number text, -- WASRA membership number; admin-only, not readable with the public key
   created_at timestamptz not null default now(),
   unique (match_id, entry_number)
 );
--- for projects that already ran an older version of this file
-alter table rba.entries add column if not exists membership_number text;
+
+-- WASRA membership numbers live in their own table so they stay private:
+-- no public read access, only the server (service role key) can read or write them.
+create table if not exists rba.entry_members (
+  entry_id uuid primary key references rba.entries(id) on delete cascade,
+  membership_number text not null
+);
+alter table rba.entry_members enable row level security;
 
 create table if not exists rba.card_scores (
   id uuid primary key default gen_random_uuid(),
@@ -92,10 +97,9 @@ grant all on all tables in schema rba to service_role;
 alter default privileges in schema rba grant select on tables to anon, authenticated;
 alter default privileges in schema rba grant all on tables to service_role;
 
--- Keep membership numbers private: the public key may read every entries column except that one.
--- (The admin page reads them through a server route that uses the service role key.)
-revoke select on rba.entries from anon, authenticated;
-grant select (id, match_id, entry_number, name, created_at) on rba.entries to anon, authenticated;
+-- Keep membership numbers private (must stay after the grants above).
+revoke all on rba.entry_members from anon, authenticated;
+grant all on rba.entry_members to service_role;
 
 -- AFTER running this: Supabase dashboard -> Project Settings -> API (Data API settings)
 -- -> add "rba" to "Exposed schemas" and save. Without that the API returns "schema must be one of ...".
