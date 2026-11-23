@@ -147,6 +147,34 @@ td.total { font-weight: 700; font-size: 1.1rem; text-align: center; }
 
 .bigtotal { font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 
+.cardbox {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.cardhead { display: flex; gap: 12px; align-items: baseline; margin-bottom: 8px; }
+.cardscore { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.shots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; }
+.shot {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.detail { background: var(--bg); white-space: normal; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.04em; }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tabs button { padding: 8px 14px; }
+.tabs .gap { flex: 0 0 12px; }
+input[type="checkbox"] { width: auto; }
+.check { display: flex; gap: 6px; align-items: center; font-size: 1rem; color: var(--text); margin: 0; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
 @media (max-width: 560px) {
   .card-grid { grid-template-columns: 44px 70px 70px 1fr; }
 }

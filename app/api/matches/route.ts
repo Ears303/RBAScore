@@ -10,17 +10,50 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const name = String(body.name ?? "").trim();
   const numCards = Number(body.num_cards ?? 5);
+  const classNames: string[] = Array.isArray(body.classes)
+    ? body.classes.map((s: unknown) => String(s).trim()).filter(Boolean)
+    : [];
+
   if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
   if (!Number.isInteger(numCards) || numCards < 1 || numCards > 30) {
     return NextResponse.json({ error: "Cards must be 1 to 30" }, { status: 400 });
   }
-  const { data, error } = await admin()
+  if (classNames.length < 1 || classNames.length > 6) {
+    return NextResponse.json({ error: "Give 1 to 6 classes" }, { status: 400 });
+  }
+  if (new Set(classNames.map((c) => c.toLowerCase())).size !== classNames.length) {
+    return NextResponse.json({ error: "Class names must be different" }, { status: 400 });
+  }
+
+  const db = admin();
+  const { data: match, error } = await db
     .from("matches")
     .insert({ name, match_date: body.match_date || null, num_cards: numCards })
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, match: data });
+
+  const { data: classes, error: cErr } = await db
+    .from("classes")
+    .insert(classNames.map((n, i) => ({ match_id: match.id, name: n, sort_order: i })))
+    .select()
+    .order("sort_order");
+  if (cErr || !classes) {
+    await db.from("matches").delete().eq("id", match.id);
+    return NextResponse.json({ error: cErr?.message ?? "Could not add classes" }, { status: 500 });
+  }
+
+  // Default aggregates: 2 classes -> "2 Gun Agg"; 3 classes -> "3 Gun Agg" and a "2 Gun Agg" of the first two.
+  // These can be changed on the admin page.
+  const ids = classes.map((c: { id: string }) => c.id);
+  const aggs: { match_id: string; name: string; class_ids: string[] }[] = [];
+  if (ids.length === 3) aggs.push({ match_id: match.id, name: "3 Gun Agg", class_ids: ids });
+  if (ids.length === 2 || ids.length === 3) {
+    aggs.push({ match_id: match.id, name: "2 Gun Agg", class_ids: ids.slice(0, 2) });
+  }
+  if (aggs.length) await db.from("aggregates").insert(aggs);
+
+  return NextResponse.json({ ok: true, match });
 }
 
 export async function DELETE(req: Request) {

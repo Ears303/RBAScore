@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 type CardIn = {
   card_number: number;
-  score: number | null;
+  shots: number[];
   first_miss: number | null;
   notes: string | null;
 };
@@ -13,20 +13,28 @@ type CardIn = {
 const isInt = (v: unknown): v is number =>
   typeof v === "number" && Number.isInteger(v);
 
+// A shot is a whole number 0 to 10, or 10.01 (an X).
+const validShot = (v: unknown): v is number =>
+  typeof v === "number" &&
+  ((Number.isInteger(v) && v >= 0 && v <= 10) || Math.round(v * 100) === 1001);
+
 export async function POST(req: Request) {
   if (!authorised(req, "scorer")) {
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
   }
 
-  let body: { entry_id?: string; cards?: CardIn[] };
+  let body: { entry_id?: string; class_id?: string; cards?: CardIn[] };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const { entry_id, cards } = body;
-  if (!entry_id || !Array.isArray(cards)) {
-    return NextResponse.json({ error: "entry_id and cards required" }, { status: 400 });
+  const { entry_id, class_id, cards } = body;
+  if (!entry_id || !class_id || !Array.isArray(cards)) {
+    return NextResponse.json(
+      { error: "entry_id, class_id and cards required" },
+      { status: 400 }
+    );
   }
 
   const upserts: object[] = [];
@@ -36,13 +44,20 @@ export async function POST(req: Request) {
     if (!isInt(c.card_number) || c.card_number < 1) {
       return NextResponse.json({ error: "Bad card number" }, { status: 400 });
     }
-    if (c.score === null || c.score === undefined) {
+    // No shots means the card is empty: remove any saved score for it.
+    if (!Array.isArray(c.shots) || c.shots.length === 0) {
       clears.push(c.card_number);
       continue;
     }
-    if (!isInt(c.score) || c.score < 0 || c.score > 25) {
+    if (c.shots.length > 25) {
       return NextResponse.json(
-        { error: `Card ${c.card_number}: score must be 0 to 25` },
+        { error: `Card ${c.card_number}: more than 25 shots` },
+        { status: 400 }
+      );
+    }
+    if (!c.shots.every(validShot)) {
+      return NextResponse.json(
+        { error: `Card ${c.card_number}: each shot must be 0 to 10 or X` },
         { status: 400 }
       );
     }
@@ -56,10 +71,17 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    // Normalise X to exactly 10.01 and compute the score on the server.
+    const shots = c.shots.map((v) => (v > 10 ? 10.01 : v));
+    const score = shots.reduce((sum, v) => sum + Math.round(v * 100), 0) / 100;
+
     upserts.push({
       entry_id,
+      class_id,
       card_number: c.card_number,
-      score: c.score,
+      shots,
+      score,
       first_miss: c.first_miss ?? null,
       notes: c.notes?.trim() ? c.notes.trim().slice(0, 500) : null,
       updated_at: new Date().toISOString(),
@@ -71,7 +93,7 @@ export async function POST(req: Request) {
   if (upserts.length) {
     const { error } = await db
       .from("card_scores")
-      .upsert(upserts, { onConflict: "entry_id,card_number" });
+      .upsert(upserts, { onConflict: "entry_id,class_id,card_number" });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
   if (clears.length) {
@@ -79,6 +101,7 @@ export async function POST(req: Request) {
       .from("card_scores")
       .delete()
       .eq("entry_id", entry_id)
+      .eq("class_id", class_id)
       .in("card_number", clears);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

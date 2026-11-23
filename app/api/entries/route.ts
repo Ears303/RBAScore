@@ -3,7 +3,7 @@ import { admin, authorised } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
-type RowIn = { entry_number: number; name: string; class?: string | null };
+type RowIn = { entry_number: number; name: string };
 
 export async function POST(req: Request) {
   if (!authorised(req, "admin")) {
@@ -26,12 +26,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    clean.push({
-      match_id: matchId,
-      entry_number: num,
-      name,
-      class: r.class?.toString().trim() || null,
-    });
+    clean.push({ match_id: matchId, entry_number: num, name });
   }
 
   const { error } = await admin()

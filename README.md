@@ -2,9 +2,13 @@
 
 Next.js app for Vercel with a Supabase back end.
 
-- `/` public scoreboard (ranked, per-card scores, first miss, notes marker, total). Auto-refreshes every 15 seconds.
-- `/score` score entry (PIN). Find a shooter by name or entry number, enter each card's score (0 to 25), first miss shot number and notes. Total updates as you type.
-- `/admin` (PIN) create matches (set number of cards), add entries one at a time or paste a list.
+- `/` public scoreboard. One tab per class plus a tab per aggregate (e.g. 2 Gun Agg, 3 Gun Agg). Ranked, per-card scores, first miss, notes marker, total, and tap a row to see every shot. The decimals of a score are the X count. Auto-refreshes every 15 seconds.
+- `/score` score entry (PIN). Find a shooter by name or entry number, then enter each card's 25 shots one at a time (0 to 10, or `X` which counts 10.01), plus first miss shot number and notes. A card maxes at 250.25. Card and match totals update as you type. Typing moves to the next shot automatically (type `1` then `0` for a 10), and you can paste a whole card like `10 X X 9 8 ...`.
+- `/admin` (PIN) create matches (cards per class and the classes shot), manage aggregates, add entries one at a time or paste a list.
+
+## Classes and aggregates
+
+A competitor has one entry number per match and can shoot up to three classes (or more if the match has more). Scores are entered per class on the score entry page. Each class has its own board. An aggregate is the sum of the classes it lists, and a competitor shows on it once they have scores in every one of those classes. A 3-class match gets "3 Gun Agg" (all three) and "2 Gun Agg" (the first two) by default; change them on the admin page.
 
 ## Setup
 
@@ -23,6 +27,10 @@ The scoreboard reads directly from Supabase using the anon key. Row level securi
 
 All tables are in the `rba` schema:
 
-- `matches`: name, date, number of cards
-- `entries`: entry number (unique per match), name, class
-- `card_scores`: one row per entry per card with score (0 to 25), first miss (1 to 25 or blank), notes
+- `matches`: name, date, number of cards per class
+- `classes`: the classes shot at a match
+- `aggregates`: named sums of classes (2 Gun Agg, 3 Gun Agg)
+- `entries`: entry number (unique per match), name
+- `card_scores`: one row per entry per class per card with the shots (array of up to 25 values, 10.01 = X), card score (max 250.25, calculated by the API), first miss (1 to 25 or blank), notes
+
+If you already ran an earlier version of `schema.sql` (before shot-by-shot entry), run `drop schema rba cascade;` first, then run the current file. Nothing is lost if no scores were entered yet.

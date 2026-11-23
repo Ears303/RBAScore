@@ -1,5 +1,6 @@
 -- RBA Scoring schema. Paste into the Supabase SQL editor of your existing project and run once.
 -- Everything lives in its own "rba" schema so it stays separate from your other projects' tables.
+-- Already ran an older version? Run `drop schema rba cascade;` first (only if there is no data to keep).
 
 create schema if not exists rba;
 
@@ -7,16 +8,35 @@ create table if not exists rba.matches (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   match_date date,
-  num_cards int not null default 5 check (num_cards between 1 and 30),
+  num_cards int not null default 5 check (num_cards between 1 and 30), -- cards per class
   created_at timestamptz not null default now()
 );
 
+-- The classes shot at a match (e.g. Light Varmint, Heavy Varmint, Sporter).
+create table if not exists rba.classes (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null references rba.matches(id) on delete cascade,
+  name text not null,
+  sort_order int not null default 0,
+  unique (match_id, name)
+);
+
+-- Aggregates such as "2 Gun Agg" or "3 Gun Agg": the sum of the listed classes.
+-- A competitor appears on an aggregate once they have scores in every class it lists.
+create table if not exists rba.aggregates (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null references rba.matches(id) on delete cascade,
+  name text not null,
+  class_ids uuid[] not null,
+  created_at timestamptz not null default now()
+);
+
+-- One entry per competitor per match (one entry number across all their classes).
 create table if not exists rba.entries (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references rba.matches(id) on delete cascade,
   entry_number int not null,
   name text not null,
-  class text,
   created_at timestamptz not null default now(),
   unique (match_id, entry_number)
 );
@@ -24,28 +44,40 @@ create table if not exists rba.entries (
 create table if not exists rba.card_scores (
   id uuid primary key default gen_random_uuid(),
   entry_id uuid not null references rba.entries(id) on delete cascade,
+  class_id uuid not null references rba.classes(id) on delete cascade,
   card_number int not null check (card_number >= 1),
-  score int not null check (score between 0 and 25),
+  -- up to 25 shots, each 0 to 10, or 10.01 for an X (so the decimals are the X count)
+  shots numeric(4,2)[] not null default '{}' check (cardinality(shots) <= 25),
+  -- card total (max 25 x 10.01 = 250.25), computed by the API from the shots
+  score numeric(5,2) not null check (score between 0 and 250.25),
   first_miss int check (first_miss between 1 and 25),
   notes text,
   updated_at timestamptz not null default now(),
-  unique (entry_id, card_number)
+  unique (entry_id, class_id, card_number)
 );
 
+create index if not exists classes_match_idx on rba.classes(match_id);
+create index if not exists aggregates_match_idx on rba.aggregates(match_id);
 create index if not exists entries_match_idx on rba.entries(match_id);
 create index if not exists card_scores_entry_idx on rba.card_scores(entry_id);
 
 -- Row level security: anyone can read (public scoreboard).
 -- There are no insert/update/delete policies, so only the server (service role key) can write.
 alter table rba.matches enable row level security;
+alter table rba.classes enable row level security;
+alter table rba.aggregates enable row level security;
 alter table rba.entries enable row level security;
 alter table rba.card_scores enable row level security;
 
 drop policy if exists "public read matches" on rba.matches;
+drop policy if exists "public read classes" on rba.classes;
+drop policy if exists "public read aggregates" on rba.aggregates;
 drop policy if exists "public read entries" on rba.entries;
 drop policy if exists "public read card_scores" on rba.card_scores;
 
 create policy "public read matches" on rba.matches for select using (true);
+create policy "public read classes" on rba.classes for select using (true);
+create policy "public read aggregates" on rba.aggregates for select using (true);
 create policy "public read entries" on rba.entries for select using (true);
 create policy "public read card_scores" on rba.card_scores for select using (true);
 

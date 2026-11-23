@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import PinGate from "@/components/PinGate";
-import { api, loadEntries, loadMatches } from "@/lib/client";
-import type { Entry, Match } from "@/lib/types";
+import { api, loadMatchData, loadMatches } from "@/lib/client";
+import { emptyMatchData, hasClass, type Entry, type Match, type MatchData } from "@/lib/types";
 
 export default function AdminPage() {
   return (
@@ -19,17 +19,21 @@ export default function AdminPage() {
 function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [matchId, setMatchId] = useState("");
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [data, setData] = useState<MatchData>(emptyMatchData());
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const [mName, setMName] = useState("");
   const [mDate, setMDate] = useState("");
   const [mCards, setMCards] = useState("5");
+  const [mClasses, setMClasses] = useState("");
 
   const [eNum, setENum] = useState("");
   const [eName, setEName] = useState("");
-  const [eClass, setEClass] = useState("");
   const [bulk, setBulk] = useState("");
+
+  const [newClass, setNewClass] = useState("");
+  const [aName, setAName] = useState("");
+  const [aSel, setASel] = useState<Set<string>>(new Set());
 
   const fail = (e: unknown) =>
     setMsg({ kind: "err", text: e instanceof Error ? e.message : "Something went wrong" });
@@ -40,9 +44,8 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
     setMatchId(selectId ?? (m.find((x) => x.id === matchId) ? matchId : m[0]?.id ?? ""));
   }
 
-  async function reloadEntries() {
-    if (!matchId) return setEntries([]);
-    setEntries(await loadEntries(matchId));
+  async function reloadData() {
+    setData(matchId ? await loadMatchData(matchId) : emptyMatchData());
   }
 
   useEffect(() => {
@@ -51,7 +54,8 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
   }, []);
 
   useEffect(() => {
-    reloadEntries().catch(fail);
+    setASel(new Set());
+    reloadData().catch(fail);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId]);
 
@@ -62,6 +66,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
         name: mName,
         match_date: mDate || null,
         num_cards: Number(mCards),
+        classes: mClasses.split(",").map((s) => s.trim()).filter(Boolean),
       });
       setMName("");
       setMDate("");
@@ -84,16 +89,55 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
     }
   }
 
+  async function addClass(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await api("/api/classes", pin, { match_id: matchId, name: newClass });
+      setNewClass("");
+      await reloadData();
+      setMsg({ kind: "ok", text: "Class added. Add it to an aggregate below if needed." });
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function addAggregate(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await api("/api/aggregates", pin, {
+        match_id: matchId,
+        name: aName,
+        class_ids: Array.from(aSel),
+      });
+      setAName("");
+      setASel(new Set());
+      await reloadData();
+      setMsg({ kind: "ok", text: "Aggregate added" });
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function deleteAggregate(id: string, name: string) {
+    if (!confirm(`Delete the "${name}" aggregate? Scores are not affected.`)) return;
+    try {
+      await api(`/api/aggregates?id=${id}`, pin, undefined, "DELETE");
+      await reloadData();
+    } catch (err) {
+      fail(err);
+    }
+  }
+
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
     try {
       await api("/api/entries", pin, {
         match_id: matchId,
-        rows: [{ entry_number: Number(eNum), name: eName, class: eClass }],
+        rows: [{ entry_number: Number(eNum), name: eName }],
       });
       setENum("");
       setEName("");
-      await reloadEntries();
+      await reloadData();
       setMsg({ kind: "ok", text: "Entry saved" });
     } catch (err) {
       fail(err);
@@ -106,13 +150,13 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       .map((l) => l.trim())
       .filter(Boolean)
       .map((l) => {
-        const [num, name, cls] = l.split(/[,\t]/).map((s) => s.trim());
-        return { entry_number: Number(num), name, class: cls || null };
+        const [num, name] = l.split(/[,\t]/).map((s) => s.trim());
+        return { entry_number: Number(num), name };
       });
     try {
       const res = await api("/api/entries", pin, { match_id: matchId, rows });
       setBulk("");
-      await reloadEntries();
+      await reloadData();
       setMsg({ kind: "ok", text: `Imported ${res.count} entries` });
     } catch (err) {
       fail(err);
@@ -123,11 +167,13 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
     if (!confirm(`Delete #${en.entry_number} ${en.name} and their scores?`)) return;
     try {
       await api(`/api/entries?id=${en.id}`, pin, undefined, "DELETE");
-      await reloadEntries();
+      await reloadData();
     } catch (err) {
       fail(err);
     }
   }
+
+  const className = (id: string) => data.classes.find((c) => c.id === id)?.name ?? "?";
 
   return (
     <>
@@ -146,13 +192,29 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
               <input id="mdate" type="date" value={mDate} onChange={(e) => setMDate(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="mcards">Number of cards</label>
+              <label htmlFor="mcards">Cards per class</label>
               <input id="mcards" inputMode="numeric" value={mCards} onChange={(e) => setMCards(e.target.value)} />
+            </div>
+          </div>
+          <div className="row" style={{ marginTop: 12 }}>
+            <div style={{ flex: "3 1 300px" }}>
+              <label htmlFor="mclasses">Classes (comma separated, in order)</label>
+              <input
+                id="mclasses"
+                value={mClasses}
+                onChange={(e) => setMClasses(e.target.value)}
+                placeholder="Light Varmint, Heavy Varmint, Sporter"
+                required
+              />
             </div>
             <div className="shrink">
               <button type="submit">Create</button>
             </div>
           </div>
+          <p className="muted small" style={{ marginBottom: 0 }}>
+            With 3 classes the match gets a "3 Gun Agg" (all three) and a "2 Gun Agg" (the first two) automatically.
+            With 2 classes it gets a "2 Gun Agg". You can change aggregates after creating the match.
+          </p>
         </form>
       </div>
 
@@ -164,7 +226,7 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
               {matches.length === 0 && <option value="">No matches yet</option>}
               {matches.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name}{m.match_date ? ` (${m.match_date})` : ""} · {m.num_cards} cards
+                  {m.name}{m.match_date ? ` (${m.match_date})` : ""} · {m.num_cards} cards per class
                 </option>
               ))}
             </select>
@@ -181,6 +243,74 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
       {matchId && (
         <>
           <div className="panel">
+            <h2>Classes and aggregates</h2>
+            <div className="chips" style={{ marginBottom: 12 }}>
+              {data.classes.map((c) => (
+                <span key={c.id} className="muted">{c.name}</span>
+              ))}
+            </div>
+            <form onSubmit={addClass}>
+              <div className="row">
+                <div>
+                  <label htmlFor="newclass">Add a class</label>
+                  <input id="newclass" value={newClass} onChange={(e) => setNewClass(e.target.value)} required />
+                </div>
+                <div className="shrink">
+                  <button type="submit">Add class</button>
+                </div>
+              </div>
+            </form>
+
+            <h2 style={{ marginTop: 24 }}>Aggregates</h2>
+            {data.aggregates.length === 0 && <p className="muted small">None yet.</p>}
+            {data.aggregates.map((a) => (
+              <div key={a.id} className="row" style={{ alignItems: "center", marginBottom: 8 }}>
+                <div>
+                  <strong>{a.name}</strong>{" "}
+                  <span className="muted small">= {a.class_ids.map(className).join(" + ")}</span>
+                </div>
+                <div className="shrink">
+                  <button className="danger" onClick={() => deleteAggregate(a.id, a.name)}>Delete</button>
+                </div>
+              </div>
+            ))}
+
+            <form onSubmit={addAggregate} style={{ marginTop: 12 }}>
+              <div className="row">
+                <div>
+                  <label htmlFor="aname">New aggregate name</label>
+                  <input id="aname" value={aName} onChange={(e) => setAName(e.target.value)} placeholder="2 Gun Agg" required />
+                </div>
+                <div style={{ flex: "2 1 260px" }}>
+                  <label>Classes it adds up</label>
+                  <div className="chips">
+                    {data.classes.map((c) => (
+                      <label key={c.id} className="check">
+                        <input
+                          type="checkbox"
+                          checked={aSel.has(c.id)}
+                          onChange={() =>
+                            setASel((s) => {
+                              const n = new Set(s);
+                              if (n.has(c.id)) n.delete(c.id);
+                              else n.add(c.id);
+                              return n;
+                            })
+                          }
+                        />
+                        {c.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="shrink">
+                  <button type="submit">Add aggregate</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div className="panel">
             <h2>Add or update an entry</h2>
             <form onSubmit={addEntry}>
               <div className="row">
@@ -192,10 +322,6 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
                   <label htmlFor="ename">Name</label>
                   <input id="ename" value={eName} onChange={(e) => setEName(e.target.value)} required />
                 </div>
-                <div>
-                  <label htmlFor="eclass">Class (optional)</label>
-                  <input id="eclass" value={eClass} onChange={(e) => setEClass(e.target.value)} />
-                </div>
                 <div className="shrink">
                   <button type="submit">Save entry</button>
                 </div>
@@ -204,12 +330,13 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
 
             <h2 style={{ marginTop: 24 }}>Bulk import</h2>
             <p className="muted small" style={{ marginTop: 0 }}>
-              One entry per line: <code>number, name, class</code> (class optional). Existing numbers are updated.
+              One competitor per line: <code>number, name</code>. Existing numbers are updated. A competitor has one
+              entry number for all the classes they shoot.
             </p>
             <textarea
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
-              placeholder={"1, Paul Donohoe, Rimfire\n2, Jane Smith, Rimfire"}
+              placeholder={"1, Paul Donohoe\n2, Jane Smith"}
             />
             <div style={{ marginTop: 8 }}>
               <button onClick={importBulk} disabled={!bulk.trim()}>Import</button>
@@ -217,31 +344,31 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
           </div>
 
           <div className="panel table-wrap">
-            <h2>Entries ({entries.length})</h2>
+            <h2>Entries ({data.entries.length})</h2>
             <table>
               <thead>
                 <tr>
                   <th className="num">#</th>
                   <th>Name</th>
-                  <th>Class</th>
-                  <th className="num">Cards scored</th>
+                  <th>Classes scored</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
-                {entries.map((en) => (
+                {data.entries.map((en) => (
                   <tr key={en.id}>
                     <td className="num">{en.entry_number}</td>
                     <td>{en.name}</td>
-                    <td className="muted">{en.class ?? ""}</td>
-                    <td className="num">{en.card_scores.length}</td>
+                    <td className="muted">
+                      {data.classes.filter((c) => hasClass(en, c.id)).map((c) => c.name).join(", ")}
+                    </td>
                     <td style={{ textAlign: "right" }}>
                       <button className="danger" onClick={() => deleteEntry(en)}>Delete</button>
                     </td>
                   </tr>
                 ))}
-                {entries.length === 0 && (
-                  <tr><td colSpan={5} className="muted">No entries yet.</td></tr>
+                {data.entries.length === 0 && (
+                  <tr><td colSpan={4} className="muted">No entries yet.</td></tr>
                 )}
               </tbody>
             </table>
