@@ -32,7 +32,7 @@ function BoardCard({
         <span />
         <span />
         {cols.map((c) => (
-          <span key={c.label} className="cd">{c.label}</span>
+          <span key={c.label} className="cd">{board.isAgg ? c.label.replace(/\s+/g, "\n") : c.label}</span>
         ))}
         <span>Score</span>
       </div>

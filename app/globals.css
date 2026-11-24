@@ -241,7 +241,7 @@ input[type="checkbox"] { width: auto; }
 .tvpanel li { border-bottom: 1px solid #1f2923; }
 .tvhdr { color: #93a098; border-bottom: 1px solid #2b352f; padding-bottom: 0.2vh; }
 .tvhdr { align-items: end; }
-.tvhdr span { font-size: 0.55em; text-align: right; line-height: 1.1; }
+.tvhdr span { font-size: 0.55em; text-align: right; line-height: 1.1; white-space: pre-line; }
 .tvpanel .cd { font-size: 0.72em; text-align: right; color: #c9d4cc; }
 .tvhdr .cd { color: #93a098; }
 .tvpanel .tt { text-align: right; }
@@ -286,7 +286,7 @@ input[type="checkbox"] { width: auto; }
 }
 .pbhdr { border-bottom: 1px solid var(--line); padding-bottom: 4px; color: var(--muted); }
 .pbhdr { align-items: end; }
-.pbhdr span { font-size: 0.72em; text-transform: uppercase; text-align: right; line-height: 1.1; }
+.pbhdr span { font-size: 0.72em; text-transform: uppercase; text-align: right; line-height: 1.1; white-space: pre-line; }
 .pb ol { list-style: none; margin: 0; padding: 0; }
 .pb li { padding: 7px 0; border-bottom: 1px solid var(--line); }
 .pb li:last-child { border-bottom: 0; }
