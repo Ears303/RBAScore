@@ -27,6 +27,7 @@ export default function NavBar() {
       <span className="brand">RBA Scoring</span>
       <Link href="/">Scoreboard</Link>
       <Link href="/tv">TV display</Link>
+      <Link href="/details">Shot detail</Link>
       {showScore && <Link href="/score">Score entry</Link>}
       {showAdmin && <Link href="/admin">Admin</Link>}
     </nav>

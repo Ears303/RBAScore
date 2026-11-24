@@ -47,8 +47,8 @@ function ShotGrid({
   function handle(i: number, raw: string) {
     const r = applyInput(shots, i, raw);
     onChange(r.next);
-    if (r.pendingOne && r.focus === i) return; // stay put, waiting for a possible 0
-    focusAt(r.focus, r.pendingOne);
+    if (r.pending && r.focus === i) return; // stay put, waiting for a possible second 0
+    focusAt(r.focus, r.pending);
   }
 
   function keyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
@@ -301,8 +301,9 @@ function Scorer({ pin, lock }: { pin: string; lock: () => void }) {
           )}
 
           <p className="muted small">
-            Type each shot: 0 to 10, or X for an X (counts 10.01). It moves to the next shot by itself.
-            For a 10 type 1 then 0. You can also paste a whole card, e.g. <code>10 X X 9 8 10 …</code>
+            Type each shot as a number, 0 to 10, and <strong>00 for an X</strong> (counts 10.01). It moves to the
+            next shot by itself. For a 10 type 1 then 0. A single 0 or 1 waits for a second digit: press the next
+            shot, or Space to confirm. You can also paste a whole card, e.g. <code>10 00 00 9 8 10 …</code>
           </p>
 
           {rows.map((r, i) => {

@@ -4,34 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { loadMatchData, loadMatches } from "@/lib/client";
 import { shortName } from "@/lib/names";
 import { fmt2 } from "@/lib/shots";
-import {
-  cardOf,
-  classTotal,
-  emptyMatchData,
-  onBoard,
-  totalOver,
-  type Entry,
-  type Match,
-  type MatchData,
-} from "@/lib/types";
-
-type Board = { key: string; title: string; classIds: string[]; isAgg: boolean };
-type Row = { e: Entry; total: number; rank: string };
-/** A column between the name and the score: a card on a class board, a class total on an aggregate. */
-type Col = { label: string; get: (e: Entry) => string };
-
-function rankBoard(entries: Entry[], classIds: string[]): Row[] {
-  const list = entries
-    .filter((e) => onBoard(e, classIds))
-    .map((e) => ({ e, total: totalOver(e, classIds) }))
-    .sort((a, b) => b.total - a.total || a.e.entry_number - b.e.entry_number);
-  return list.map((r) => ({
-    ...r,
-    rank: `${1 + list.filter((x) => x.total > r.total).length}${
-      list.filter((x) => x.total === r.total).length > 1 ? "=" : ""
-    }`,
-  }));
-}
+import { colsFor, makeBoards, rankBoard, type Board, type Col, type Row } from "@/lib/boards";
+import { emptyMatchData, type Match, type MatchData } from "@/lib/types";
 
 function Panel({
   board,
@@ -49,11 +23,12 @@ function Panel({
   const pages = Math.max(1, Math.ceil(rows.length / perPage));
   const page = tick % pages;
   const slice = rows.slice(page * perPage, (page + 1) * perPage);
-  const grid = `1.5em minmax(0, 1fr) repeat(${cols.length}, 2.8em) ${board.isAgg ? "4.9em" : "4.4em"}`;
+  const colW = board.isAgg ? 3.9 : 2.8; // aggregate columns carry class names such as "Light Gun"
+  const grid = `1.5em minmax(0, 1fr) repeat(${cols.length}, ${colW}em) ${board.isAgg ? "4.9em" : "4.4em"}`;
   return (
     <section
       className={`tvpanel${board.isAgg ? " tvagg" : ""}`}
-      style={{ flexGrow: 1, flexBasis: `calc(${cols.length} * 3.25em + 15em)` }}
+      style={{ flexGrow: 1, flexBasis: `calc(${cols.length} * ${colW + 0.45}em + 15em)` }}
     >
       <header>
         <h2>{board.title}</h2>
@@ -141,40 +116,15 @@ export default function TvPage() {
     return () => clearInterval(t);
   }, [secs]);
 
-  const boards = useMemo<Board[]>(
-    () => [
-      ...data.classes.map((c) => ({ key: c.id, title: c.name, classIds: [c.id], isAgg: false })),
-      ...data.aggregates.map((a) => ({
-        key: `agg:${a.id}`,
-        title: a.name,
-        classIds: a.class_ids.filter((id) => data.classes.some((c) => c.id === id)),
-        isAgg: true,
+  const ranked = useMemo(
+    () =>
+      makeBoards(data).map((board) => ({
+        board,
+        rows: rankBoard(data.entries, board.classIds),
+        cols: colsFor(board, data),
       })),
-    ],
     [data]
   );
-
-  const ranked = useMemo(
-    () => boards.map((b) => ({ board: b, rows: rankBoard(data.entries, b.classIds) })),
-    [boards, data.entries]
-  );
-  const colsFor = (b: Board): Col[] => {
-    if (b.isAgg) {
-      return b.classIds.map((id) => ({
-        label: data.classes.find((c) => c.id === id)?.name ?? "",
-        get: (e: Entry) => fmt2(classTotal(e, id)),
-      }));
-    }
-    const id = b.classIds[0];
-    const n = data.classes.find((c) => c.id === id)?.num_cards ?? 0;
-    return Array.from({ length: n }, (_, i) => ({
-      label: `Card ${i + 1}`,
-      get: (e: Entry) => {
-        const c = cardOf(e, id, i + 1);
-        return c ? fmt2(Number(c.score)) : "–";
-      },
-    }));
-  };
   const classBoards = ranked.filter((r) => !r.board.isAgg);
   const aggBoards = ranked.filter((r) => r.board.isAgg);
 
@@ -197,15 +147,15 @@ export default function TvPage() {
 
       {classBoards.length > 0 && (
         <div className="tvrow">
-          {classBoards.map(({ board, rows }) => (
-            <Panel key={board.key} board={board} rows={rows} cols={colsFor(board)} perPage={perPage} tick={tick} />
+          {classBoards.map(({ board, rows, cols }) => (
+            <Panel key={board.key} board={board} rows={rows} cols={cols} perPage={perPage} tick={tick} />
           ))}
         </div>
       )}
       {aggBoards.length > 0 && (
         <div className="tvrow">
-          {aggBoards.map(({ board, rows }) => (
-            <Panel key={board.key} board={board} rows={rows} cols={colsFor(board)} perPage={perPage} tick={tick} />
+          {aggBoards.map(({ board, rows, cols }) => (
+            <Panel key={board.key} board={board} rows={rows} cols={cols} perPage={perPage} tick={tick} />
           ))}
         </div>
       )}

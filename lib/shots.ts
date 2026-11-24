@@ -34,16 +34,18 @@ export type InputResult = {
   next: string[];
   /** index of the box that should have focus afterwards */
   focus: number;
-  /** a lone "1" is waiting to see if a "0" follows (making 10) */
-  pendingOne: boolean;
+  /** a lone "1" or "0" is waiting to see if another "0" follows (10, or 00 = X) */
+  pending: boolean;
 };
 
 /**
  * Handles typing or pasting into shot box `i`. Works as a stream, so it behaves the same on
- * a desktop keyboard, a phone keyboard and a paste like "10 X X 9 8".
- *  - X, or a digit 0 and 2 to 9, completes the shot and moves on
+ * a desktop keyboard, a phone keyboard and a paste like "10 00 00 9 8".
+ *  - digits 2 to 9 complete the shot and move on
  *  - "1" waits: a following "0" makes 10, any other key makes it 1 and moves on
- *  - space only confirms a waiting "1"
+ *  - "0" waits: a following "0" makes an X (00), any other key makes it 0 and moves on
+ *  - the letter X still works as an X
+ *  - space only confirms a waiting "1" or "0"
  */
 export function applyInput(shots: string[], i: number, raw: string): InputResult {
   const s = raw
@@ -54,34 +56,33 @@ export function applyInput(shots: string[], i: number, raw: string): InputResult
 
   if (s === "") {
     next[i] = "";
-    return { next, focus: i, pendingOne: false };
+    return { next, focus: i, pending: false };
   }
 
   let idx = i;
-  let pending = false;
+  let pending: "1" | "0" | null = null;
   const put = (v: string) => {
     if (idx < SHOTS) next[idx] = v;
+  };
+  const flush = () => {
+    if (pending) {
+      put(pending);
+      idx++;
+      pending = null;
+    }
   };
 
   for (const ch of s) {
     if (idx >= SHOTS) {
-      pending = false;
+      pending = null;
       break;
     }
     if (ch === " ") {
-      if (pending) {
-        put("1");
-        idx++;
-        pending = false;
-      }
+      flush();
       continue;
     }
     if (ch === "X") {
-      if (pending) {
-        put("1");
-        idx++;
-        pending = false;
-      }
+      flush();
       if (idx < SHOTS) {
         put("X");
         idx++;
@@ -89,30 +90,32 @@ export function applyInput(shots: string[], i: number, raw: string): InputResult
       continue;
     }
     // a digit
-    if (pending) {
-      if (ch === "0") {
-        put("10");
-        idx++;
-        pending = false;
-        continue;
-      }
-      put("1");
+    if (pending === "1" && ch === "0") {
+      put("10");
       idx++;
-      pending = false;
-      if (idx >= SHOTS) break;
+      pending = null;
+      continue;
     }
-    if (ch === "1") {
-      pending = true;
+    if (pending === "0" && ch === "0") {
+      put("X");
+      idx++;
+      pending = null;
+      continue;
+    }
+    flush();
+    if (idx >= SHOTS) break;
+    if (ch === "1" || ch === "0") {
+      pending = ch;
     } else {
       put(ch);
       idx++;
     }
   }
 
-  if (pending && idx < SHOTS) put("1");
+  if (pending && idx < SHOTS) put(pending);
   return {
     next,
     focus: Math.min(idx, SHOTS - 1),
-    pendingOne: pending && idx < SHOTS,
+    pending: pending !== null && idx < SHOTS,
   };
 }

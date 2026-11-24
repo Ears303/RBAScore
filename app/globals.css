@@ -240,7 +240,8 @@ input[type="checkbox"] { width: auto; }
 }
 .tvpanel li { border-bottom: 1px solid #1f2923; }
 .tvhdr { color: #93a098; border-bottom: 1px solid #2b352f; padding-bottom: 0.2vh; }
-.tvhdr span { font-size: 0.55em; text-align: right; white-space: nowrap; }
+.tvhdr { align-items: end; }
+.tvhdr span { font-size: 0.55em; text-align: right; line-height: 1.1; }
 .tvpanel .cd { font-size: 0.72em; text-align: right; color: #c9d4cc; }
 .tvhdr .cd { color: #93a098; }
 .tvpanel .tt { text-align: right; }
@@ -257,3 +258,45 @@ input[type="checkbox"] { width: auto; }
 .logo { height: 64px; width: auto; background: #fff; border-radius: 8px; padding: 3px; }
 .tvbrand { display: flex; align-items: center; gap: 1vw; }
 .tvlogo { height: 10vh; width: auto; background: #fff; border-radius: 1vh; padding: 0.4vh 0.5vh; }
+
+/* ---- Public scoreboard (/): every board at once, stacked on a phone, side by side on a wide screen ---- */
+.boards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.pb {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px 8px;
+  font-size: clamp(13px, 3.7vw, 16px);
+  min-width: 0;
+}
+.pbagg { border-color: var(--accent); }
+.pb h2 { margin: 0 0 6px; font-size: 1.2em; color: var(--accent); }
+.pbhdr, .pb li {
+  display: grid;
+  grid-template-columns: var(--g);
+  align-items: center;
+  column-gap: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+.pbhdr { border-bottom: 1px solid var(--line); padding-bottom: 4px; color: var(--muted); }
+.pbhdr { align-items: end; }
+.pbhdr span { font-size: 0.72em; text-transform: uppercase; text-align: right; line-height: 1.1; }
+.pb ol { list-style: none; margin: 0; padding: 0; }
+.pb li { padding: 7px 0; border-bottom: 1px solid var(--line); }
+.pb li:last-child { border-bottom: 0; }
+.pb .rk { color: var(--muted); text-align: right; }
+.pb .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pb .cd { text-align: right; font-size: 0.85em; color: var(--muted); }
+.pb .tt { text-align: right; font-weight: 800; }
+.pb li.first .rk, .pb li.first .tt { color: var(--accent); }
+
+@media (max-width: 520px) {
+  .pbwide .pbhdr, .pbwide li { grid-template-columns: var(--gn); }
+  .pbwide .cd { display: none; }
+}
