@@ -61,3 +61,20 @@ export function colsFor(b: Board, data: MatchData): Col[] {
     },
   }));
 }
+
+/** A card that scored 250 (all ten shots 10 or X); the decimals are its X count. */
+export type Perfect = { id: string; name: string; className: string; card: number };
+
+/** Every 250 card in the match, most recently saved first. */
+export function perfectCards(data: MatchData): Perfect[] {
+  const found: (Perfect & { when: string })[] = [];
+  for (const e of data.entries) {
+    for (const c of e.card_scores) {
+      if (Number(c.score) < 250) continue;
+      const cl = data.classes.find((x) => x.id === c.class_id);
+      if (!cl) continue;
+      found.push({ id: c.id, name: e.name, className: cl.name, card: c.card_number, when: c.updated_at ?? "" });
+    }
+  }
+  return found.sort((a, b) => b.when.localeCompare(a.when));
+}

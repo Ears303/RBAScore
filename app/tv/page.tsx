@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { loadMatchData, loadMatches } from "@/lib/client";
 import { shortName } from "@/lib/names";
 import { fmt2 } from "@/lib/shots";
-import { colsFor, makeBoards, rankBoard, type Board, type Col, type Row } from "@/lib/boards";
+import { colsFor, makeBoards, perfectCards, rankBoard, type Board, type Col, type Row } from "@/lib/boards";
 import { emptyMatchData, type Match, type MatchData } from "@/lib/types";
 
 function Panel({
@@ -46,7 +46,7 @@ function Panel({
         ))}
         <span className="tt">Score</span>
       </div>
-      <ol style={{ gridTemplateRows: `repeat(${perPage}, 1fr)` }}>
+      <ol style={{ gridTemplateRows: `repeat(${perPage}, minmax(0, 1fr))` }}>
         {slice.map((r) => (
           <li
             key={r.e.id}
@@ -125,11 +125,16 @@ export default function TvPage() {
       })),
     [data]
   );
+  const perfect = useMemo(() => perfectCards(data), [data]);
+  // the 250 strip is one fixed line, so it pages through the 250s three at a time
+  const perfPages = Math.max(1, Math.ceil(perfect.length / 3));
+  const perfPage = tick % perfPages;
+  const perfSlice = perfect.slice(perfPage * 3, perfPage * 3 + 3);
   const classBoards = ranked.filter((r) => !r.board.isAgg);
   const aggBoards = ranked.filter((r) => r.board.isAgg);
 
   return (
-    <div className="tv">
+    <div className={`tv${perfect.length > 0 ? " tvhasperfect" : ""}`}>
       <div className="tvhead">
         <div className="tvbrand">
           {match?.logo && (
@@ -142,6 +147,22 @@ export default function TvPage() {
           {error ? <span className="tverr">{error}</span> : updated ? `Updated ${updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}
         </div>
       </div>
+
+      {perfect.length > 0 && (
+        <div className="tvperfect">
+          <span className="pfl">250</span>
+          {perfSlice.map((p) => (
+            <span key={p.id} className="pfc">
+              <b>{shortName(p.name)}</b> {p.className} · Card {p.card}
+            </span>
+          ))}
+          {perfPages > 1 && (
+            <span className="tvpage" style={{ marginLeft: "auto" }}>
+              {perfPage + 1}/{perfPages}
+            </span>
+          )}
+        </div>
+      )}
 
       {noMatch && <div className="tvmsg">No match set up yet.</div>}
 

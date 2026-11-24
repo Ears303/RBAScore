@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { loadMatchData, loadMatches } from "@/lib/client";
-import { colsFor, makeBoards, rankBoard, type Board, type Col, type Row } from "@/lib/boards";
+import { colsFor, makeBoards, perfectCards, rankBoard, type Board, type Col, type Row } from "@/lib/boards";
 import { shortName } from "@/lib/names";
 import { fmt2 } from "@/lib/shots";
 import { emptyMatchData, type Match, type MatchData } from "@/lib/types";
@@ -109,6 +109,8 @@ export default function Scoreboard() {
     [data]
   );
 
+  const perfect = useMemo(() => perfectCards(data), [data]);
+
   return (
     <>
       <div className="titlerow">
@@ -118,6 +120,17 @@ export default function Scoreboard() {
         )}
         <h1>{match ? match.name : "Scoreboard"}</h1>
       </div>
+
+      {perfect.length > 0 && (
+        <div className="pf">
+          <span className="pfl">250</span>
+          {perfect.map((p) => (
+            <span key={p.id} className="pfc">
+              <b>{shortName(p.name)}</b> {p.className} · Card {p.card}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="panel">
         <div className="row">

@@ -34,6 +34,7 @@ export type CardScore = {
   score: number;
   first_miss: number | null;
   notes: string | null;
+  updated_at?: string | null;
 };
 
 export type Entry = {

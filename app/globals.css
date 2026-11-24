@@ -300,3 +300,34 @@ input[type="checkbox"] { width: auto; }
   .pbwide .pbhdr, .pbwide li { grid-template-columns: var(--gn); }
   .pbwide .cd { display: none; }
 }
+
+/* ---- 250 cards ---- */
+:root { --gold: #8a6a00; --gold-bg: #fbf5df; --gold-line: #d9bd5a; }
+@media (prefers-color-scheme: dark) {
+  :root { --gold: #e8c15a; --gold-bg: #2a2410; --gold-line: #6b5a1c; }
+}
+.pf, .tvperfect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-line);
+}
+.pf { gap: 4px 16px; padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; }
+.pfl { font-weight: 800; letter-spacing: 0.04em; color: var(--gold); }
+.pfc { white-space: nowrap; }
+.pfc b { font-weight: 700; }
+.tvperfect {
+  --gold-bg: #2a2410; --gold-line: #6b5a1c; --gold: #e8c15a;
+  gap: 0.6vh 1.6vw;
+  padding: 0.9vh 1.2vw;
+  border-radius: 1.2vh;
+  font-size: 2.6vh;
+}
+.tvperfect .pfl { font-size: 1.15em; }
+.tvperfect { flex-wrap: nowrap; align-items: center; overflow: hidden; }
+/* with the 250 strip showing there is less height for the boards, so the text steps down a little */
+.tvhasperfect .tvpanel { font-size: min(2.4vh, 1.4vw); }
+.tvhasperfect .tvpanel h2 { font-size: 3.2vh; }
+.tvhasperfect .tvtitle { font-size: 3.6vh; }
+.tvhasperfect .tvlogo { height: 8vh; }
