@@ -197,31 +197,31 @@ input[type="checkbox"] { width: auto; }
   flex-direction: column;
   gap: 1.2vh;
   padding: 1.4vh 1.2vw;
-  background: #0b110d;
-  color: #f2f7f3;
+  background: #ffffff;
+  color: #14201a;
   cursor: none;
   overflow: hidden;
 }
 .tvhead { display: flex; justify-content: space-between; align-items: baseline; }
 .tvtitle { font-size: 4vh; font-weight: 800; letter-spacing: 0.01em; }
-.tvmeta { font-size: 2vh; color: #93a098; }
-.tverr { color: #f2877f; }
-.tvmsg { font-size: 4vh; color: #93a098; margin: auto; }
+.tvmeta { font-size: 2vh; color: #5b6a61; }
+.tverr { color: #c0392b; }
+.tvmsg { font-size: 4vh; color: #5b6a61; margin: auto; }
 .tvrow { flex: 1; display: flex; gap: 1.2vw; min-height: 0; }
 .tvpanel {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: #141c17;
-  border: 1px solid #2b352f;
+  background: #f4f8f5;
+  border: 1px solid #c9d6cd;
   border-radius: 1.2vh;
   padding: 1vh 1vw 0.6vh;
 }
-.tvagg { border-color: #3d6b52; }
+.tvagg { border-color: #7fb394; }
 .tvpanel header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.6vh; }
-.tvpanel h2 { margin: 0; font-size: 3.6vh; color: #4fb07f; }
-.tvpage { font-size: 2vh; color: #93a098; }
+.tvpanel h2 { margin: 0; font-size: 3.6vh; color: #1f7a4d; }
+.tvpage { font-size: 2vh; color: #5b6a61; }
 .tvpanel ol {
   flex: 1;
   min-height: 0;
@@ -238,19 +238,19 @@ input[type="checkbox"] { width: auto; }
   column-gap: 0.25em;
   font-variant-numeric: tabular-nums;
 }
-.tvpanel li { border-bottom: 1px solid #1f2923; }
-.tvhdr { color: #93a098; border-bottom: 1px solid #2b352f; padding-bottom: 0.2vh; }
+.tvpanel li { border-bottom: 1px solid #dde6e0; }
+.tvhdr { color: #5b6a61; border-bottom: 1px solid #c9d6cd; padding-bottom: 0.2vh; }
 .tvhdr { align-items: end; }
 .tvhdr span { font-size: 0.55em; text-align: right; line-height: 1.1; white-space: pre-line; }
-.tvpanel .cd { font-size: 0.72em; text-align: right; color: #c9d4cc; }
-.tvhdr .cd { color: #93a098; }
+.tvpanel .cd { font-size: 0.72em; text-align: right; color: #2a3a31; }
+.tvhdr .cd { color: #5b6a61; }
 .tvpanel .tt { text-align: right; }
 .tvpanel li:last-child { border-bottom: 0; }
-.tvpanel .rk { color: #93a098; text-align: right; }
+.tvpanel .rk { color: #5b6a61; text-align: right; }
 .tvpanel .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .tvpanel .tt { font-weight: 800; }
-.tvpanel li.first .rk, .tvpanel li.first .tt { color: #e8c15a; }
-.tvpanel li.empty { display: block; color: #93a098; align-self: center; }
+.tvpanel li.first .rk, .tvpanel li.first .tt { color: #8a6a00; }
+.tvpanel li.empty { display: block; color: #5b6a61; align-self: center; }
 
 .titlerow { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
 .titlerow h1 { margin: 0; }
@@ -318,7 +318,7 @@ input[type="checkbox"] { width: auto; }
 .pfc { white-space: nowrap; }
 .pfc b { font-weight: 700; }
 .tvperfect {
-  --gold-bg: #2a2410; --gold-line: #6b5a1c; --gold: #e8c15a;
+  --gold-bg: #fbf1c7; --gold-line: #d9bd5a; --gold: #8a6a00;
   gap: 0.6vh 1.6vw;
   padding: 0.9vh 1.2vw;
   border-radius: 1.2vh;
