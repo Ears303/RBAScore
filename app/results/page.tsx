@@ -18,6 +18,19 @@ export default function ResultsPage() {
   const [perfect, setPerfect] = useState(true);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [onePerPage, setOnePerPage] = useState(false);
+  const [present, setPresent] = useState(false);
+
+  // presentation sheet: only places 1 to 3 (ties included), full names, no entry numbers
+  function setMode(p: boolean) {
+    setPresent(p);
+    setFull(p);
+    setEntryNo(!p);
+    setPerfect(!p);
+  }
+  const ord = (r: string) => {
+    const n = parseInt(r, 10);
+    return n === 1 ? "1st" : n === 2 ? "2nd" : n === 3 ? "3rd" : r;
+  };
 
   useEffect(() => {
     loadMatches()
@@ -85,6 +98,10 @@ export default function ResultsPage() {
           )}
         </div>
         <div className="rchecks">
+          <label><input type="radio" name="mode" checked={!present} onChange={() => setMode(false)} /> Full results</label>
+          <label><input type="radio" name="mode" checked={present} onChange={() => setMode(true)} /> Presentation (1st to 3rd only)</label>
+        </div>
+        <div className="rchecks">
           <label><input type="checkbox" checked={full} onChange={(e) => setFull(e.target.checked)} /> Full surnames</label>
           <label><input type="checkbox" checked={entryNo} onChange={(e) => setEntryNo(e.target.checked)} /> Entry numbers</label>
           <label><input type="checkbox" checked={perfect} onChange={(e) => setPerfect(e.target.checked)} /> List the 250s</label>
@@ -114,7 +131,7 @@ export default function ResultsPage() {
           <div>
             <h1>{match?.name ?? "Results"}</h1>
             <div className="muted">
-              {match?.match_date ? `${match.match_date} · ` : ""}Results
+              {match?.match_date ? `${match.match_date} · ` : ""}{present ? "Presentation" : "Results"}
             </div>
           </div>
         </div>
@@ -128,7 +145,7 @@ export default function ResultsPage() {
         {boards
           .filter(({ board }) => !hidden[board.key])
           .map(({ board, rows, cols }) => (
-            <section key={board.key} className={`rboard${onePerPage ? " rbreak" : ""}`}>
+            <section key={board.key} className={`rboard${onePerPage ? " rbreak" : ""}${present ? " rpres" : ""}`}>
               <h2>{board.title}</h2>
               <table>
                 <thead>
@@ -143,9 +160,9 @@ export default function ResultsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.e.id}>
-                      <td>{r.rank}</td>
+                  {(present ? rows.filter((r) => (parseInt(r.rank, 10) || 99) <= 3) : rows).map((r) => (
+                    <tr key={r.e.id} className={`m${parseInt(r.rank, 10) || 0}`}>
+                      <td>{present ? ord(r.rank) : r.rank}</td>
                       {entryNo && <td>{r.e.entry_number}</td>}
                       <td className="l">{name(r.e.name)}</td>
                       {cols.map((c) => (

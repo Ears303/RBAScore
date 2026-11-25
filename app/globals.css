@@ -366,3 +366,11 @@ input[type="checkbox"] { width: auto; }
 .rboard th, .rboard td { text-align: center; }
 .rboard th.l, .rboard td.l { text-align: left; }
 .rstamp { margin: 14px 0 0; padding-top: 6px; border-top: 1px solid #ccc; text-align: center; font-size: 0.85em; color: #444; }
+/* presentation sheet: only places 1 to 3, larger, with medal colours */
+.rpres table { font-size: 1.25em; }
+.rpres td { padding: 8px 10px; }
+.rpres h2 { font-size: 1.6em; }
+.rpres tr.m1 td:first-child, .rpres tr.m1 td:last-child { color: #b8860b; font-weight: 800; }
+.rpres tr.m2 td:first-child, .rpres tr.m2 td:last-child { color: #6e7781; font-weight: 800; }
+.rpres tr.m3 td:first-child, .rpres tr.m3 td:last-child { color: #a0522d; font-weight: 800; }
+@media print { .rpres tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
