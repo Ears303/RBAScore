@@ -40,7 +40,7 @@ function BoardCard({
         {rows.map((r) => (
           <li
             key={r.e.id}
-            className={r.rank === "1" || r.rank === "1=" ? "first" : ""}
+            className={`m${parseInt(r.rank, 10) || 0}`}
           >
             <span className="rk">{r.rank}</span>
             <span className="nm">{shortName(r.e.name)}</span>

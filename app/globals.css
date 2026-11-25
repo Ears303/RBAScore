@@ -249,7 +249,10 @@ input[type="checkbox"] { width: auto; }
 .tvpanel .rk { color: #5b6a61; text-align: right; }
 .tvpanel .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .tvpanel .tt { font-weight: 800; }
-.tvpanel li.first .rk, .tvpanel li.first .tt { color: #8a6a00; }
+.tvpanel li.m1 .rk, .tvpanel li.m1 .tt { color: #b8860b; }
+.tvpanel li.m2 .rk, .tvpanel li.m2 .tt { color: #6e7781; }
+.tvpanel li.m3 .rk, .tvpanel li.m3 .tt { color: #a0522d; }
+.tvpanel li.m1 .rk, .tvpanel li.m2 .rk, .tvpanel li.m3 .rk, .pb li.m1 .rk, .pb li.m2 .rk, .pb li.m3 .rk { font-weight: 800; }
 .tvpanel li.empty { display: block; color: #5b6a61; align-self: center; }
 
 .titlerow { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
@@ -294,7 +297,11 @@ input[type="checkbox"] { width: auto; }
 .pb .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .pb .cd { text-align: right; font-size: 0.85em; color: var(--muted); }
 .pb .tt { text-align: right; font-weight: 800; }
-.pb li.first .rk, .pb li.first .tt { color: var(--accent); }
+.pb li.m1 .rk, .pb li.m1 .tt { color: var(--medal1); }
+.pb li.m2 .rk, .pb li.m2 .tt { color: var(--medal2); }
+.pb li.m3 .rk, .pb li.m3 .tt { color: var(--medal3); }
+:root { --medal1: #b8860b; --medal2: #6e7781; --medal3: #a0522d; }
+@media (prefers-color-scheme: dark) { :root { --medal1: #e8c15a; --medal2: #c3ccd4; --medal3: #d98c5f; } }
 
 @media (max-width: 520px) {
   .pbwide .pbhdr, .pbwide li { grid-template-columns: var(--gn); }

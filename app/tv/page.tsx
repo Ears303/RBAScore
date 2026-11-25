@@ -50,7 +50,7 @@ function Panel({
         {slice.map((r) => (
           <li
             key={r.e.id}
-            className={r.rank === "1" || r.rank === "1=" ? "first" : ""}
+            className={`m${parseInt(r.rank, 10) || 0}`}
             style={{ gridTemplateColumns: grid }}
           >
             <span className="rk">{r.rank}</span>
