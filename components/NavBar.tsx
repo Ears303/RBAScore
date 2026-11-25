@@ -31,6 +31,9 @@ export default function NavBar() {
     return () => window.removeEventListener("rba-pin-change", read);
   }, [path]);
 
+  // the clean public display has no menu at all
+  if (path === "/board") return null;
+
   return (
     <nav>
       <span className="brand">RBA Scoring</span>
