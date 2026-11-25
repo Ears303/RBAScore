@@ -38,6 +38,7 @@ export default function NavBar() {
       <Link href="/tv">TV display</Link>
       <Link href="/details">Shot detail</Link>
       <Link href="/results">Results PDF</Link>
+      {!showScore && <Link href="/staff">Staff sign-in</Link>}
       {showScore && <Link href="/score">Score entry</Link>}
       {showAdmin && <Link href="/admin">Admin</Link>}
     </nav>

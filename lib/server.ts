@@ -26,6 +26,13 @@ function pinOk(req: Request, role: "scorer" | "admin") {
   return role === "scorer" && !!scorerPin && same(pin, scorerPin);
 }
 
+/** True when the request carries the admin PIN (used by the single sign-in page). */
+export function isAdminPin(req: Request) {
+  const pin = req.headers.get("x-pin") ?? "";
+  const adminPin = process.env.ADMIN_PIN;
+  return !!adminPin && same(pin, adminPin);
+}
+
 const WINDOW_MINUTES = 15;
 const MAX_WRONG = 8; // wrong PINs allowed per address in the window
 
