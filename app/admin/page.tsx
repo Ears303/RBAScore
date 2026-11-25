@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { readSheet } from "read-excel-file/browser";
 import PinGate from "@/components/PinGate";
 import { api, loadMatchData, loadMatches } from "@/lib/client";
 import { emptyMatchData, hasClass, type Entry, type Match, type MatchData } from "@/lib/types";
@@ -237,22 +238,69 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
     }
   }
 
+  // Turn pasted text or a spreadsheet into import rows. Handles a heading row, blank lines and repeats.
+  function parseBulk(text: string) {
+    const out = new Map<string, { entry_number: number | null; name: string; membership_number: string | null }>();
+    const list: { entry_number: number | null; name: string; membership_number: string | null }[] = [];
+    for (const raw of text.split(/\r?\n/)) {
+      const l = raw.trim();
+      if (!l) continue;
+      // tab separated (from Excel) keeps commas inside names; otherwise split on commas
+      const parts = (l.includes("\t") ? l.split("\t") : l.split(",")).map((x) => x.trim());
+      const hasNum = parts.length >= 2 && /^\d+$/.test(parts[0]);
+      const [name, member] = hasNum ? parts.slice(1) : parts;
+      if (!name) continue;
+      // skip a heading row such as "Entry No, Name, WASRA Membership No"
+      if (/^(entry\s*(no|number|#)?|no\.?|#|name|competitor|shooter)$/i.test(parts[0]) && /name|member|wasra/i.test(l)) continue;
+      const row = {
+        entry_number: hasNum ? Number(parts[0]) : null,
+        name,
+        membership_number: member || null,
+      };
+      // the same entry number twice in one list: the later line wins
+      if (row.entry_number !== null) {
+        const k = String(row.entry_number);
+        const prev = out.get(k);
+        if (prev) list.splice(list.indexOf(prev), 1);
+        out.set(k, row);
+      }
+      list.push(row);
+    }
+    return list;
+  }
+
+  async function chooseFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      let lines: string[];
+      if (/\.(csv|txt)$/i.test(file.name)) {
+        lines = (await file.text()).split(/\r?\n/).map((l) => l.replace(/,/g, "\t"));
+      } else {
+        const rows = (await readSheet(file)) as unknown[][];
+        lines = rows.map((r) =>
+          [r[0], r[1], r[2]].map((c) => (c === null || c === undefined ? "" : String(c).trim())).join("\t")
+        );
+      }
+      // a sheet with only Name (and optionally membership) in the first columns is also accepted
+      const text = lines.filter((l) => l.replace(/\t/g, "").trim()).join("\n");
+      const n = parseBulk(text).length;
+      setBulk(text);
+      setMsg({ kind: n ? "ok" : "err", text: n ? `${n} competitors read from ${file.name}. Check the list below, then press Import.` : `No competitors found in ${file.name}. Use the template: Entry No, Name, WASRA Membership No.` });
+    } catch {
+      setMsg({ kind: "err", text: "Could not read that file. Use an .xlsx or .csv file (the template is the safest)." });
+    }
+  }
+
   async function importBulk() {
-    const rows = bulk
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .map((l) => {
-        // [entry number,] name [, WASRA membership number]. No entry number = next free number.
-        const parts = l.split(/[,\t]/).map((s) => s.trim());
-        const hasNum = parts.length >= 2 && /^\d+$/.test(parts[0]);
-        const [name, member] = hasNum ? parts.slice(1) : parts;
-        return {
-          entry_number: hasNum ? Number(parts[0]) : null,
-          name,
-          membership_number: member || null,
-        };
-      });
+    if (!matchId) {
+      setMsg({ kind: "err", text: "Choose a match first." });
+      return;
+    }
+    const rows = parseBulk(bulk);
+    if (rows.length === 0) {
+      setMsg({ kind: "err", text: "Nothing to import. Put one competitor per line." });
+      return;
+    }
     try {
       const res = await api("/api/entries", pin, { match_id: matchId, rows });
       setBulk("");
@@ -503,6 +551,23 @@ function Admin({ pin, lock }: { pin: string; lock: () => void }) {
               choose it, e.g. <code>20, name, membership number</code> (an existing entry number is updated). A
               competitor has one entry number for all the classes they shoot.
             </p>
+            <div className="row" style={{ alignItems: "end", marginBottom: 8 }}>
+              <div>
+                <label htmlFor="xl">Import from an Excel or CSV file</label>
+                <input
+                  id="xl"
+                  type="file"
+                  accept=".xlsx,.csv,.txt"
+                  onChange={(e) => {
+                    chooseFile(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              <div>
+                <a href="/rba-entries-template.xlsx" download>Download the Excel template</a>
+              </div>
+            </div>
             <textarea
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
