@@ -338,3 +338,27 @@ input[type="checkbox"] { width: auto; }
 .tvhasperfect .tvpanel h2 { font-size: 3.2vh; }
 .tvhasperfect .tvtitle { font-size: 3.6vh; }
 .tvhasperfect .tvlogo { height: 8vh; }
+
+/* ---- Results sheet (/results): on screen it is a preview, in print it is the PDF ---- */
+.rchecks { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0; }
+.rchecks label { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.rsheet { background: #fff; color: #111; padding: 18px 22px; border-radius: 12px; max-width: 820px; margin: 0 auto; }
+.rsheet .muted { color: #555; }
+.rhead { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.rhead img { height: 70px; width: auto; }
+.rhead h1 { margin: 0; color: #111; }
+.rperf { background: #fbf1c7; border: 1px solid #d9bd5a; padding: 8px 12px; border-radius: 8px; margin: 10px 0; font-size: 0.95em; }
+.rboard { margin: 16px 0; break-inside: avoid; }
+.rboard h2 { margin: 0 0 4px; color: #1f7a4d; font-size: 1.25em; }
+.rboard table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.95em; }
+.rboard th, .rboard td { padding: 3px 8px; text-align: right; border-bottom: 1px solid #ddd; }
+.rboard th { border-bottom: 2px solid #999; font-size: 0.85em; }
+.rboard .l { text-align: left; }
+@media print {
+  nav, .noprint { display: none !important; }
+  body { background: #fff !important; }
+  .rsheet { max-width: none; padding: 0; border-radius: 0; }
+  .rbreak { break-before: page; }
+  .rbreak:first-of-type { break-before: auto; }
+  @page { margin: 14mm; }
+}
