@@ -363,3 +363,5 @@ input[type="checkbox"] { width: auto; }
   @page { margin: 14mm; }
 }
 .rboard th:first-child, .rboard td:first-child { text-align: center; width: 3.2em; }
+.rboard th, .rboard td { text-align: center; }
+.rboard th.l, .rboard td.l { text-align: left; }
