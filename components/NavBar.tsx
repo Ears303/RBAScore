@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 /**
@@ -12,7 +13,10 @@ export default function NavBar() {
   const [showScore, setShowScore] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
+  const path = usePathname();
+
   useEffect(() => {
+    const read = () => {
     try {
       const admin = !!localStorage.getItem("rba-pin-admin");
       setShowAdmin(admin);
@@ -20,7 +24,12 @@ export default function NavBar() {
     } catch {
       /* storage blocked: stay on the public menu */
     }
-  }, []);
+    };
+    read();
+    // the menu stays mounted while you move between pages, so re-read when a PIN is entered
+    window.addEventListener("rba-pin-change", read);
+    return () => window.removeEventListener("rba-pin-change", read);
+  }, [path]);
 
   return (
     <nav>

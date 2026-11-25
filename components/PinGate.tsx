@@ -25,6 +25,7 @@ export default function PinGate({
       });
       if (res.ok) {
         localStorage.setItem(key, p);
+        window.dispatchEvent(new Event("rba-pin-change"));
         setPin(p);
         setOk(true);
         setErr("");
