@@ -52,6 +52,17 @@ export default function ResultsPage() {
     [data]
   );
   const perf = useMemo(() => perfectCards(data), [data]);
+  const [stamp, setStamp] = useState("");
+  useEffect(() => {
+    // time the data was loaded, so a printed copy shows when it was published
+    if (data.entries.length || data.classes.length)
+      setStamp(
+        new Date().toLocaleString("en-AU", {
+          weekday: "short", day: "numeric", month: "short", year: "numeric",
+          hour: "numeric", minute: "2-digit", hour12: true,
+        })
+      );
+  }, [data]);
   const name = (n: string) => (full ? n : shortName(n));
 
   return (
@@ -151,6 +162,7 @@ export default function ResultsPage() {
             </section>
           ))}
         <p className="muted small">The decimals are the X count (247.18 is 247 with 18 X).</p>
+        {stamp && <p className="rstamp">Results published {stamp}</p>}
       </div>
     </div>
   );
