@@ -13,7 +13,7 @@ export default function ResultsPage() {
   const [matchId, setMatchId] = useState("");
   const [data, setData] = useState<MatchData>(emptyMatchData());
   const [error, setError] = useState("");
-  const [full, setFull] = useState(true);
+  const [full, setFull] = useState(false);
   const [entryNo, setEntryNo] = useState(true);
   const [perfect, setPerfect] = useState(true);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -74,7 +74,7 @@ export default function ResultsPage() {
           )}
         </div>
         <div className="rchecks">
-          <label><input type="checkbox" checked={full} onChange={(e) => setFull(e.target.checked)} /> Full names</label>
+          <label><input type="checkbox" checked={full} onChange={(e) => setFull(e.target.checked)} /> Full surnames</label>
           <label><input type="checkbox" checked={entryNo} onChange={(e) => setEntryNo(e.target.checked)} /> Entry numbers</label>
           <label><input type="checkbox" checked={perfect} onChange={(e) => setPerfect(e.target.checked)} /> List the 250s</label>
           <label><input type="checkbox" checked={onePerPage} onChange={(e) => setOnePerPage(e.target.checked)} /> One board per page</label>
